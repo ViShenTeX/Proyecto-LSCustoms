@@ -12,6 +12,14 @@ import '../styles/global.css';
 </head>
 
 <div class="flex flex-col min-h-screen">
+  <!-- Agregar este nuevo div para el estado de conexión -->
+  <div id="connectionStatus" class="fixed top-4 right-4 bg-white/90 backdrop-blur-sm p-4 rounded-lg shadow-lg z-50 transform transition-all duration-300">
+    <div class="flex items-center space-x-2">
+      <div class="w-3 h-3 rounded-full bg-gray-300 animate-pulse"></div>
+      <span class="text-sm text-gray-600">Verificando conexión...</span>
+    </div>
+  </div>
+
   <div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-500 py-12 px-4 shadow-lg animate-gradient">
     <div class="max-w-4xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-4">
@@ -296,5 +304,38 @@ import '../styles/global.css';
     ModalManager.getInstance();
     CarouselManager.getInstance();
   });
+
+  async function checkConnection() {
+    const statusDiv = document.getElementById('connectionStatus');
+    if (!statusDiv) return;
+    const dot = statusDiv.querySelector('div');
+    if (!dot) return;
+    const text = statusDiv.querySelector('span');
+    if (!text) return;
+
+    try {
+      const response = await fetch('/api/health');
+      if (response.ok) {
+        dot.className = 'w-3 h-3 rounded-full bg-green-500';
+        text.textContent = 'Conectado';
+        // Ocultar el mensaje después de 3 segundos
+        setTimeout(() => {
+          statusDiv.style.opacity = '0';
+          setTimeout(() => {
+            statusDiv.style.display = 'none';
+          }, 300);
+        }, 3000);
+      } else {
+        dot.className = 'w-3 h-3 rounded-full bg-red-500';
+        text.textContent = 'Error de conexión';
+      }
+    } catch (error) {
+      dot.className = 'w-3 h-3 rounded-full bg-red-500';
+      text.textContent = 'Sin conexión';
+    }
+  }
+
+  // Verificar la conexión al cargar la página
+  checkConnection();
 </script>
 
