@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Project directories
-ASTRO_DIR="/home/ec2-user/Proyecto LSCustoms/Frontend"
-NODE_DIR="/home/ec2-user/Proyecto LSCustoms/Backend"
+ASTRO_DIR="/home/ec2-user/Proyecto-LSCustoms/Frontend"
+NODE_DIR="/home/ec2-user/Proyecto-LSCustoms/Backend"
 
 # Kill any processes using ports 80 and 3000
 sudo fuser -k 80/tcp || true
