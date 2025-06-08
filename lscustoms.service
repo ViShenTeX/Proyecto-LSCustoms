@@ -5,8 +5,8 @@ After=network.target
 [Service]
 Type=forking
 User=ec2-user
-WorkingDirectory=/home/ec2-user/Proyecto LSCustoms
-ExecStart=/home/ec2-user/Proyecto LSCustoms/start-services.sh
+WorkingDirectory=/home/ec2-user/Proyecto-LSCustoms
+ExecStart=/home/ec2-user/Proyecto-LSCustoms/start-services.sh
 
 # Restart configuration
 Restart=on-failure
