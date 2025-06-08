@@ -8,10 +8,18 @@ export default defineConfig({
     server: {
       port: 80,
       host: true,
+    },
+    css: {
+      postcss: {},
     }
   },
   devToolbar: {
     enabled: false
   },
-  integrations: [react()]
+  integrations: [react()],
+  style: {
+    css: {
+      minify: false
+    }
+  }
 });
