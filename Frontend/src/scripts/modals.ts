@@ -8,9 +8,17 @@ interface FormDataValues {
 // Clase para manejar los modales
 export class ModalManager {
   private static instance: ModalManager;
-  private activeModal: HTMLElement | null = null;
+  private mechanicModal: HTMLElement | null;
+  private vehicleModal: HTMLElement | null;
+  private mechanicForm: HTMLFormElement | null;
+  private vehicleForm: HTMLFormElement | null;
 
   private constructor() {
+    this.mechanicModal = document.getElementById('mechanicModal');
+    this.vehicleModal = document.getElementById('vehicleModal');
+    this.mechanicForm = document.getElementById('mechanicForm') as HTMLFormElement;
+    this.vehicleForm = document.getElementById('vehicleForm') as HTMLFormElement;
+
     this.initializeEventListeners();
   }
 
@@ -22,212 +30,172 @@ export class ModalManager {
   }
 
   private initializeEventListeners(): void {
-    // Botones de apertura
+    // Mechanic Login Button
     const mechanicLoginBtn = document.getElementById('mechanicLoginBtn');
+    mechanicLoginBtn?.addEventListener('click', () => {
+      this.openModal('mechanicModal');
+    });
+
+    // Vehicle Status Button
     const vehicleStatusBtn = document.getElementById('vehicleStatusBtn');
+    vehicleStatusBtn?.addEventListener('click', () => {
+      this.openModal('vehicleModal');
+    });
 
-    if (mechanicLoginBtn) {
-      mechanicLoginBtn.addEventListener('click', () => this.openModal('mechanicModal'));
-    }
-
-    if (vehicleStatusBtn) {
-      vehicleStatusBtn.addEventListener('click', () => this.openModal('vehicleModal'));
-    }
-
-    // Configurar los botones de cierre
-    const closeButtons = document.querySelectorAll('[data-modal-close]');
-    closeButtons.forEach(button => {
+    // Close Modal Buttons
+    document.querySelectorAll('[data-modal-close]').forEach(button => {
       button.addEventListener('click', (e) => {
-        const modalId = (e.currentTarget as HTMLElement).getAttribute('data-modal-close');
+        const target = e.currentTarget as HTMLElement;
+        const modalId = target.getAttribute('data-modal-close');
         if (modalId) {
           this.closeModal(modalId);
         }
       });
     });
 
-    // Cerrar modal al hacer clic fuera
-    window.addEventListener('click', (e: MouseEvent) => {
-      if (e.target === this.activeModal && this.activeModal?.id) {
-        this.closeModal(this.activeModal.id);
-      }
+    // Form Submissions
+    this.mechanicForm?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.handleMechanicLogin();
     });
 
-    // Configurar los inputs
-    this.setupInputs();
+    this.vehicleForm?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.handleVehicleStatus();
+    });
   }
 
-  private setupInputs(): void {
-    // Inputs del formulario de mecánicos
-    const mechanicRutInput = document.querySelector('#mechanicForm input[name="rut"]') as HTMLInputElement;
-    const mechanicPinInput = document.querySelector('#mechanicForm input[name="pin"]') as HTMLInputElement;
-
-    if (mechanicRutInput) {
-      mechanicRutInput.addEventListener('input', () => this.formatRut(mechanicRutInput));
-    }
-
-    if (mechanicPinInput) {
-      mechanicPinInput.addEventListener('input', () => this.validateNumbers(mechanicPinInput));
-      mechanicPinInput.maxLength = 6;
-    }
-
-    // Inputs del formulario de vehículos
-    const vehicleRutInput = document.querySelector('#vehicleForm input[name="rut"]') as HTMLInputElement;
-    const vehiclePatenteInput = document.querySelector('#vehicleForm input[name="patente"]') as HTMLInputElement;
-
-    if (vehicleRutInput) {
-      vehicleRutInput.addEventListener('input', () => this.formatRut(vehicleRutInput));
-    }
-
-    if (vehiclePatenteInput) {
-      vehiclePatenteInput.addEventListener('input', () => this.formatPatente(vehiclePatenteInput));
-    }
-
-    // Configurar formularios
-    this.setupForms();
-  }
-
-  private setupForms(): void {
-    const mechanicForm = document.getElementById('mechanicForm') as HTMLFormElement;
-    const vehicleForm = document.getElementById('vehicleForm') as HTMLFormElement;
-
-    if (mechanicForm) {
-      mechanicForm.addEventListener('submit', (e: Event) => this.handleMechanicSubmit(e));
-    }
-
-    if (vehicleForm) {
-      vehicleForm.addEventListener('submit', (e: Event) => this.handleVehicleSubmit(e));
-    }
-  }
-
-  public openModal(modalId: string): void {
+  private openModal(modalId: string): void {
     const modal = document.getElementById(modalId);
-    const modalContent = document.getElementById(`${modalId}Content`);
+    const modalContent = modal?.querySelector('[id$="ModalContent"]') as HTMLElement;
     
-    if (modal && modalContent) {
-      this.activeModal = modal;
-      document.body.classList.add('modal-open');
-      modal.classList.remove('modal-hidden');
-      
-      setTimeout(() => {
-        modalContent.classList.remove('scale-95', 'opacity-0');
-        modalContent.classList.add('scale-100', 'opacity-100');
-      }, 10);
-    }
+    if (!modal || !modalContent) return;
+    
+    modal.classList.remove('modal-hidden');
+    modalContent.style.transform = 'scale(1)';
+    modalContent.style.opacity = '1';
+    document.body.classList.add('modal-open');
   }
 
-  public closeModal(modalId: string): void {
+  private closeModal(modalId: string): void {
     const modal = document.getElementById(modalId);
-    const modalContent = document.getElementById(`${modalId}Content`);
+    const modalContent = modal?.querySelector('[id$="ModalContent"]') as HTMLElement;
     
-    if (modal && modalContent) {
-      modalContent.classList.remove('scale-100', 'opacity-100');
-      modalContent.classList.add('scale-95', 'opacity-0');
-      
-      setTimeout(() => {
-        modal.classList.add('modal-hidden');
-        document.body.classList.remove('modal-open');
-        this.activeModal = null;
-      }, 300);
-    }
-  }
-
-  private formatRut(input: HTMLInputElement): void {
-    let value = input.value.replace(/[^0-9kK]/g, '');
+    if (!modal || !modalContent) return;
     
-    // Limitar a 9 caracteres (8 números + 1 dígito verificador)
-    if (value.length > 9) {
-      value = value.slice(0, 9);
-    }
+    modalContent.style.transform = 'scale(0.95)';
+    modalContent.style.opacity = '0';
     
-    if (value.length > 1) {
-      const dv = value.slice(-1);
-      const rut = value.slice(0, -1);
-      
-      let rutFormatted = '';
-      for (let i = rut.length; i > 0; i -= 3) {
-        rutFormatted = '.' + rut.slice(Math.max(0, i - 3), i) + rutFormatted;
+    setTimeout(() => {
+      modal.classList.add('modal-hidden');
+      document.body.classList.remove('modal-open');
+      if (modalId === 'mechanicModal') {
+        this.mechanicForm?.reset();
+      } else if (modalId === 'vehicleModal') {
+        this.vehicleForm?.reset();
       }
-      rutFormatted = rutFormatted.slice(1);
-      
-      value = rutFormatted + '-' + dv;
-    }
-    
-    input.value = value;
+    }, 150);
   }
 
-  private formatPatente(input: HTMLInputElement): void {
-    let value = input.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-    
-    if (value.length > 2) {
-      value = value.slice(0, 2) + '-' + value.slice(2);
-    }
-    if (value.length > 5) {
-      value = value.slice(0, 5) + '-' + value.slice(5);
-    }
-    if (value.length > 8) {
-      value = value.slice(0, 8);
-    }
-    
-    input.value = value;
-  }
+  private async handleMechanicLogin(): Promise<void> {
+    if (!this.mechanicForm) return;
 
-  private validateNumbers(input: HTMLInputElement): void {
-    input.value = input.value.replace(/[^0-9]/g, '');
-  }
-
-  private validateRut(rut: string): boolean {
-    const rutRegex = /^(\d{1,2}\.\d{3}\.\d{3}-[\dkK]|\d{1,2}\.\d{3}\.\d{3}-[\dkK])$/;
-    return rutRegex.test(rut);
-  }
-
-  private validatePatente(patente: string): boolean {
-    const patenteRegex = /^[A-Z]{2}-[A-Z]{2}-[0-9]{2}$/;
-    return patenteRegex.test(patente);
-  }
-
-  private async handleMechanicSubmit(e: Event): Promise<void> {
-    e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    const formData = new FormData(form);
-    const data: FormDataValues = {
-      rut: formData.get('rut') as string,
-      pin: formData.get('pin') as string
+    const formData = new FormData(this.mechanicForm);
+    const loginData = {
+      rut: formData.get('rut'),
+      pin: formData.get('pin')
     };
 
-    if (!this.validateRut(data.rut)) {
-      alert('Por favor, ingrese un RUT válido');
-      return;
-    }
+    try {
+      const response = await fetch('/api/mechanics/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(loginData)
+      });
 
-    if (!data.pin || data.pin.length !== 6 || !/^\d+$/.test(data.pin)) {
-      alert('El PIN debe contener exactamente 6 dígitos');
-      return;
+      if (response.ok) {
+        const data = await response.json();
+        // Store the token
+        localStorage.setItem('mechanicToken', data.token);
+        // Redirect to mechanic dashboard
+        window.location.href = '/mechanic';
+      } else {
+        throw new Error('Invalid credentials');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      // Show error message to user
+      alert('Error al iniciar sesión. Por favor, verifique sus credenciales.');
     }
-
-    // Aquí irá la lógica para enviar los datos al backend
-    console.log('Datos del mecánico:', data);
   }
 
-  private async handleVehicleSubmit(e: Event): Promise<void> {
-    e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    const formData = new FormData(form);
-    const data: FormDataValues = {
-      rut: formData.get('rut') as string,
-      patente: formData.get('patente') as string
+  private async handleVehicleStatus(): Promise<void> {
+    if (!this.vehicleForm) return;
+
+    const formData = new FormData(this.vehicleForm);
+    const searchData = {
+      rut: formData.get('rut'),
+      patente: formData.get('patente')
     };
 
-    if (!this.validateRut(data.rut)) {
-      alert('Por favor, ingrese un RUT válido');
-      return;
-    }
+    try {
+      const response = await fetch('/api/vehicles/status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(searchData)
+      });
 
-    if (!data.patente || !this.validatePatente(data.patente)) {
-      alert('Por favor, ingrese una patente válida (formato: XX-XX-XX)');
-      return;
+      if (response.ok) {
+        const vehicleData = await response.json();
+        // Show vehicle status in a modal or redirect to status page
+        this.showVehicleStatus(vehicleData);
+      } else {
+        throw new Error('Vehicle not found');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('No se encontró el vehículo. Por favor, verifique los datos ingresados.');
     }
+  }
 
-    // Aquí irá la lógica para enviar los datos al backend
-    console.log('Datos del vehículo:', data);
+  private showVehicleStatus(vehicleData: any): void {
+    // Create and show a modal with vehicle status
+    const statusModal = document.createElement('div');
+    statusModal.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50';
+    statusModal.innerHTML = `
+      <div class="bg-white p-8 rounded-lg shadow-xl w-[500px]">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-gray-800">Estado del Vehículo</h2>
+          <button type="button" class="text-indigo-400 hover:text-indigo-700 transition-colors p-2 hover:bg-indigo-100 rounded-full" onclick="this.closest('.fixed').remove()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-700">Información del Vehículo</h3>
+            <p class="text-gray-600">Patente: ${vehicleData.patente}</p>
+            <p class="text-gray-600">Marca: ${vehicleData.marca}</p>
+            <p class="text-gray-600">Modelo: ${vehicleData.modelo}</p>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-700">Estado Actual</h3>
+            <p class="text-gray-600">Estado: ${vehicleData.estado}</p>
+            <p class="text-gray-600">Fecha de ingreso: ${new Date(vehicleData.fecha_ingreso).toLocaleDateString()}</p>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-700">Observaciones</h3>
+            <p class="text-gray-600">${vehicleData.observaciones || 'Sin observaciones'}</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(statusModal);
   }
 } 
