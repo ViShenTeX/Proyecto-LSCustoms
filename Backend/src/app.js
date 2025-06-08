@@ -17,6 +17,11 @@ app.use('/api/mecanicos', require('./routes/mecanicos'));
 app.use('/api/clientes', require('./routes/clientes'));
 app.use('/api/vehiculos', require('./routes/vehiculos'));
 
+// Ruta de health check
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Backend is healthy' });
+});
+
 // Sincronizar la base de datos
 sequelize.sync({ alter: true }).then(() => {
   console.log('Base de datos sincronizada');
