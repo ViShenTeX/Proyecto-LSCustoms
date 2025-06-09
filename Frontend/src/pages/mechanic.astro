@@ -327,8 +327,14 @@ import '../styles/global.css';
       await vehicleManager.loadVehicles();
 
       // Verificar si el usuario es admin y mostrar la sección de mecánicos
-      if (data.rol === 'admin') {
-        document.getElementById('mechanicsSection')?.classList.remove('hidden');
+      console.log('Verificando rol de admin:', data.rol);
+      const mechanicsSection = document.getElementById('mechanicsSection');
+      if (data.rol === 'admin' && mechanicsSection) {
+        console.log('Mostrando sección de mecánicos');
+        mechanicsSection.classList.remove('hidden');
+        await loadMechanics();
+      } else {
+        console.log('Usuario no es admin o no se encontró la sección de mecánicos');
       }
     } catch (error) {
       console.error('Error verificando autenticación:', error);
@@ -454,9 +460,4 @@ import '../styles/global.css';
       }
     }
   };
-
-  // Cargar mecánicos al iniciar si el usuario es admin
-  if (document.getElementById('mechanicsSection')?.classList.contains('hidden') === false) {
-    await loadMechanics();
-  }
 </script> 
