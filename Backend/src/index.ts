@@ -3,6 +3,8 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
+import { generalLimiter } from './middleware/rateLimiter';
 import { AppDataSource } from './config/data-source';
 import mechanicRoutes from './routes/mechanicRoutes';
 import vehiculoRoutes from './routes/vehiculoRoutes';
@@ -15,9 +17,11 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(generalLimiter);
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

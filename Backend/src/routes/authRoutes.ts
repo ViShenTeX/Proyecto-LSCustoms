@@ -1,10 +1,14 @@
 import { Router } from 'express';
+import { authLimiter } from '../middleware/rateLimiter';
 import { Mechanic } from '../models/Mechanic';
 import jwt from 'jsonwebtoken';
 import db from '../config/database';
 import bcrypt from 'bcrypt';
 
 const router = Router();
+
+// Aplicar rate limiter a las rutas de autenticación
+router.use(authLimiter);
 
 // Verify token
 router.get('/verify', async (req, res) => {
@@ -53,12 +57,6 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        console.log('Login successful for mechanic:', {
-            id: mechanic.id,
-            rut: mechanic.rut,
-            role: mechanic.role
-        });
-
         const token = jwt.sign(
             { 
                 id: mechanic.id,
@@ -66,7 +64,7 @@ router.post('/login', async (req, res) => {
                 role: mechanic.role
             },
             process.env.JWT_SECRET || 'your-secret-key',
-            { expiresIn: '24h' }
+            { expiresIn: '8h' }
         );
 
         return res.json({
