@@ -9,7 +9,7 @@ export class VehicleManager {
   private imagePreview: HTMLElement | null;
   private selectedFiles: File[] = [];
   private API_BASE_URL = '/api';
-  private currentVehicleId: number | null = null;
+  private currentVehicleId: string | null = null;
 
   private constructor() {
     this.vehicleModal = document.getElementById('vehicleModal');
@@ -36,6 +36,7 @@ export class VehicleManager {
     this.addVehicleBtn?.addEventListener('click', () => {
       this.currentVehicleId = null;
       this.openModal();
+      this.showAllFields();
     });
 
     // Close Modal Buttons
@@ -64,6 +65,10 @@ export class VehicleManager {
     this.logoutBtn?.addEventListener('click', () => {
       this.handleLogout();
     });
+
+    // Add global functions for edit and delete
+    (window as any).editVehicle = (id: string) => this.editVehicle(id);
+    (window as any).deleteVehicle = (id: string) => this.deleteVehicle(id);
   }
 
   public async loadVehicles(): Promise<void> {
@@ -182,6 +187,95 @@ export class VehicleManager {
     });
   }
 
+  private showAllFields(): void {
+    const fields = ['patente', 'marca', 'modelo', 'estado', 'observaciones', 'rut', 'nombre', 'telefono'];
+    fields.forEach(field => {
+      const element = document.getElementById(field)?.parentElement;
+      if (element) element.style.display = 'block';
+    });
+  }
+
+  private showEditFields(): void {
+    const editFields = ['estado', 'observaciones'];
+    const createFields = ['patente', 'marca', 'modelo', 'rut', 'nombre', 'telefono'];
+    
+    editFields.forEach(field => {
+      const element = document.getElementById(field)?.parentElement;
+      if (element) element.style.display = 'block';
+    });
+
+    createFields.forEach(field => {
+      const element = document.getElementById(field)?.parentElement;
+      if (element) element.style.display = 'none';
+    });
+  }
+
+  private async editVehicle(id: string): Promise<void> {
+    try {
+      const token = localStorage.getItem('mechanicToken');
+      if (!token) {
+        this.showError('No hay sesión activa');
+        return;
+      }
+
+      const response = await fetch(`${this.API_BASE_URL}/vehiculos/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al cargar el vehículo');
+      }
+
+      const vehicle = await response.json();
+      this.currentVehicleId = id;
+      
+      // Llenar el formulario con los datos del vehículo
+      if (this.vehicleForm) {
+        const formData = new FormData(this.vehicleForm);
+        formData.set('estado', vehicle.estado);
+        formData.set('observaciones', vehicle.observaciones || '');
+      }
+
+      this.showEditFields();
+      this.openModal();
+    } catch (error) {
+      console.error('Error:', error);
+      this.showError('Error al cargar el vehículo');
+    }
+  }
+
+  private async deleteVehicle(id: string): Promise<void> {
+    if (!confirm('¿Estás seguro de que deseas eliminar este vehículo?')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('mechanicToken');
+      if (!token) {
+        this.showError('No hay sesión activa');
+        return;
+      }
+
+      const response = await fetch(`${this.API_BASE_URL}/vehiculos/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al eliminar el vehículo');
+      }
+
+      this.loadVehicles();
+    } catch (error) {
+      console.error('Error:', error);
+      this.showError('Error al eliminar el vehículo');
+    }
+  }
+
   private async handleFormSubmit(): Promise<void> {
     if (!this.vehicleForm) return;
 
@@ -192,24 +286,34 @@ export class VehicleManager {
     }
 
     const formData = new FormData(this.vehicleForm);
-    const vehicleData = {
-      patente: formData.get('patente'),
-      marca: formData.get('marca'),
-      modelo: formData.get('modelo'),
-      estado: formData.get('estado'),
-      observaciones: formData.get('observaciones'),
-      cliente_rut: formData.get('rut'),
-      cliente_nombre: formData.get('nombre'),
-      cliente_telefono: formData.get('telefono')
-    };
+    let vehicleData: any = {};
 
-    console.log('Enviando datos:', vehicleData);
+    if (this.currentVehicleId) {
+      // Modo edición
+      vehicleData = {
+        estado: formData.get('estado'),
+        observaciones: formData.get('observaciones')
+      };
+    } else {
+      // Modo creación
+      vehicleData = {
+        patente: formData.get('patente'),
+        marca: formData.get('marca'),
+        modelo: formData.get('modelo'),
+        estado: formData.get('estado'),
+        observaciones: formData.get('observaciones'),
+        cliente_rut: formData.get('rut'),
+        cliente_nombre: formData.get('nombre'),
+        cliente_telefono: formData.get('telefono')
+      };
+    }
 
     try {
-      const url = this.currentVehicleId ? `${this.API_BASE_URL}/vehiculos/${this.currentVehicleId}` : `${this.API_BASE_URL}/vehiculos`;
+      const url = this.currentVehicleId ? 
+        `${this.API_BASE_URL}/vehiculos/${this.currentVehicleId}` : 
+        `${this.API_BASE_URL}/vehiculos`;
+      
       const method = this.currentVehicleId ? 'PUT' : 'POST';
-      console.log('URL:', url);
-      console.log('Método:', method);
       
       const response = await fetch(url, {
         method: method,
@@ -223,7 +327,7 @@ export class VehicleManager {
       if (response.ok) {
         // Upload images if any
         if (this.selectedFiles.length > 0) {
-          const vehicleId = await response.json();
+          const vehicleId = this.currentVehicleId || (await response.json()).toString();
           await this.uploadImages(vehicleId, this.selectedFiles);
         }
         
