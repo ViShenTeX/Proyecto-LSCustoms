@@ -28,15 +28,15 @@ export const registerMechanic = async (req: Request, res: Response): Promise<Res
 
     // Crear nuevo mecánico
     const [result]: any = await db.execute(
-      'INSERT INTO mechanics (name, rut, pin, role, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())',
-      [name, rut, hashedPin, role || 'mecanico']
+      'INSERT INTO mechanics (name, rut, pin, role, active, created_at, updated_at) VALUES (?, ?, ?, ?, 1, NOW(), NOW())',
+      [name, rut, hashedPin, role || 'mechanic']
     );
 
     res.status(201).json({
       id: result.insertId,
       name,
       rut,
-      role: role || 'mecanico'
+      role: role || 'mechanic'
     });
   } catch (error) {
     console.error('Error al registrar mecánico:', error);
