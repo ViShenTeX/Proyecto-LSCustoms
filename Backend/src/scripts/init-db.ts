@@ -8,10 +8,9 @@ async function initDatabase() {
       CREATE TABLE IF NOT EXISTS mechanics (
         id INT AUTO_INCREMENT PRIMARY KEY,
         rut VARCHAR(20) NOT NULL UNIQUE,
+        nombre VARCHAR(100) NOT NULL,
         pin VARCHAR(255) NOT NULL,
-        name VARCHAR(100) NOT NULL,
-        role ENUM('mechanic', 'admin') DEFAULT 'mechanic',
-        active BOOLEAN DEFAULT TRUE,
+        rol ENUM('mecanico', 'admin') DEFAULT 'mecanico',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )

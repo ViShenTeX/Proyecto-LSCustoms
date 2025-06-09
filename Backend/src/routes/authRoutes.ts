@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { Mechanic } from '../models/Mechanic';
 import jwt from 'jsonwebtoken';
 import db from '../config/database';
+import bcrypt from 'bcrypt';
 
 const router = Router();
 
@@ -23,9 +24,7 @@ router.get('/verify', async (req, res) => {
         return res.json({ valid: true, mechanic: {
             id: mechanic.id,
             nombre: mechanic.nombre,
-            apellido: mechanic.apellido,
             rut: mechanic.rut,
-            especialidad: mechanic.especialidad,
             rol: mechanic.rol
         }});
     } catch (error) {
@@ -44,7 +43,7 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        const isValidPin = await Mechanic.comparePin(pin, mechanic.password);
+        const isValidPin = await Mechanic.comparePin(pin, mechanic.pin);
         if (!isValidPin) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
@@ -64,9 +63,7 @@ router.post('/login', async (req, res) => {
             mechanic: {
                 id: mechanic.id,
                 nombre: mechanic.nombre,
-                apellido: mechanic.apellido,
                 rut: mechanic.rut,
-                especialidad: mechanic.especialidad,
                 rol: mechanic.rol
             }
         });
@@ -79,7 +76,7 @@ router.post('/login', async (req, res) => {
 // Register
 router.post('/register', async (req, res) => {
     try {
-        const { name, apellido, rut, pin, especialidad, role } = req.body;
+        const { nombre, rut, pin, rol } = req.body;
 
         // Verificar si ya existe un mecánico con el mismo RUT
         const [existingMechanics]: any = await db.execute(
@@ -91,10 +88,13 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ message: 'Ya existe un mecánico con este RUT' });
         }
 
+        // Hash del PIN
+        const hashedPin = await bcrypt.hash(pin, 10);
+
         // Crear nuevo mecánico
         const [result]: any = await db.execute(
-            'INSERT INTO mechanics (name, apellido, rut, pin, especialidad, role, active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, true, NOW(), NOW())',
-            [name, apellido, rut, pin, especialidad, role || 'mecanico']
+            'INSERT INTO mechanics (nombre, rut, pin, rol, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())',
+            [nombre, rut, hashedPin, rol || 'mecanico']
         );
 
         return res.status(201).json({
