@@ -22,14 +22,19 @@ function getStatusColor(status: string): string {
 
 if (rut && patente) {
   try {
-    const response = await fetch(`http://localhost:3000/api/vehiculos/status?rut=${encodeURIComponent(rut)}&patente=${encodeURIComponent(patente)}`);
+    console.log(`Attempting to fetch vehicle status for RUT: ${rut}, Patente: ${patente}`);
+    const response = await fetch(`/api/vehiculos/status?rut=${encodeURIComponent(rut)}&patente=${encodeURIComponent(patente)}`);
     
+    console.log('API Response Status:', response.status);
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+      console.error('API Error Response:', errorData);
       throw new Error(errorData.message || 'Vehículo no encontrado');
     }
 
     vehicle = await response.json();
+    console.log('Fetched Vehicle Data:', vehicle);
+
   } catch (error) {
     console.error('Error al buscar vehículo:', error);
     errorMessage = error instanceof Error ? error.message : 'Error al buscar el vehículo';
