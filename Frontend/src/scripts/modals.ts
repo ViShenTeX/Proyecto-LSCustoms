@@ -159,7 +159,8 @@ export class ModalManager {
     }
 
     try {
-      const response = await fetch('http://3.83.95.128/api/auth/login', {
+      console.log('Intentando login con RUT:', rut);
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -167,14 +168,20 @@ export class ModalManager {
         body: JSON.stringify({ rut, pin }),
       });
 
+      console.log('Respuesta del login:', response.status);
+      
       if (!response.ok) {
         throw new Error('Invalid credentials');
       }
 
       const data = await response.json();
+      console.log('Login exitoso, datos recibidos:', data);
+      
       if (data.token) {
+        console.log('Guardando token y datos del mecánico');
         localStorage.setItem('mechanicToken', data.token);
         localStorage.setItem('mechanicData', JSON.stringify(data.mechanic));
+        console.log('Redirigiendo a página de mecánicos');
         window.location.replace('/mechanic');
       } else {
         throw new Error('No token received');
