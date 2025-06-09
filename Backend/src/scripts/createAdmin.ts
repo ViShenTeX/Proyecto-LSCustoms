@@ -1,39 +1,20 @@
-import { AppDataSource } from '../config/data-source';
-import { Mechanic } from '../models/Mechanic';
+import db from '../config/database';
 import bcrypt from 'bcrypt';
 
 async function createAdmin() {
     try {
-        await AppDataSource.initialize();
-        console.log('Conexión a la base de datos establecida');
+        const adminPin = await bcrypt.hash('103003', 10);
+        
+        const [result]: any = await db.execute(
+            'INSERT INTO mechanics (name, rut, pin, role, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())',
+            ['Vichicho', '21.430.534-8', adminPin, 'admin']
+        );
 
-        const mechanicRepository = AppDataSource.getRepository(Mechanic);
-
-        // Verificar si ya existe un administrador
-        const existingAdmin = await mechanicRepository.findOne({
-            where: { rut: '21.430.534-8' }
-        });
-
-        if (existingAdmin) {
-            console.log('El administrador ya existe');
-            return;
-        }
-
-        // Crear el administrador
-        const admin = new Mechanic();
-        admin.nombre = 'Administrador';
-        admin.rut = '21.430.534-8';
-        admin.password = await bcrypt.hash('103003', 10);
-        admin.rol = 'admin';
-        admin.activo = true;
-
-        await mechanicRepository.save(admin);
-        console.log('Administrador creado exitosamente');
-
+        console.log('Admin creado exitosamente con ID:', result.insertId);
     } catch (error) {
-        console.error('Error al crear el administrador:', error);
+        console.error('Error al crear admin:', error);
     } finally {
-        await AppDataSource.destroy();
+        process.exit(0);
     }
 }
 
