@@ -1,6 +1,5 @@
 import db from '../config/database';
 import { Mechanic } from '../models/Mechanic';
-import bcrypt from 'bcryptjs';
 
 async function initDatabase() {
   try {
