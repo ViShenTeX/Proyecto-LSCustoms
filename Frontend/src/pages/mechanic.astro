@@ -78,7 +78,7 @@ import '../styles/global.css';
             <h3 class="text-lg font-semibold text-gray-700">Información del Cliente</h3>
             <div class="space-y-2">
               <label class="block text-sm font-medium text-gray-700">RUT</label>
-              <input type="text" name="rut" required pattern="^(\d{1,2}\.\d{3}\.\d{3}-[\dkK]|\d{1,2}\.\d{3}\.\d{3}-[\dkK])$" 
+              <input type="text" name="rut" required pattern="^\d{1,2}\.\d{3}\.\d{3}-[\dkK]$" 
                      class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                      placeholder="Ingrese RUT del cliente">
             </div>
