@@ -327,9 +327,9 @@ import '../styles/global.css';
       await vehicleManager.loadVehicles();
 
       // Verificar si el usuario es admin y mostrar la sección de mecánicos
-      console.log('Verificando rol de admin:', data.rol);
+      console.log('Verificando rol de admin:', data.mechanic.rol);
       const mechanicsSection = document.getElementById('mechanicsSection');
-      if (data.rol === 'admin' && mechanicsSection) {
+      if (data.mechanic.rol === 'admin' && mechanicsSection) {
         console.log('Mostrando sección de mecánicos');
         mechanicsSection.classList.remove('hidden');
         await loadMechanics();
