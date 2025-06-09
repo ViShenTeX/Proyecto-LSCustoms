@@ -38,7 +38,10 @@ async function initDatabase() {
         marca VARCHAR(50) NOT NULL,
         modelo VARCHAR(50) NOT NULL,
         año INT NOT NULL,
+        estado VARCHAR(20) NOT NULL DEFAULT 'En espera',
+        observaciones TEXT,
         cliente_id INT NOT NULL,
+        imagen VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (cliente_id) REFERENCES clientes(id)
