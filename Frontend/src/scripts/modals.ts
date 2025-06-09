@@ -39,15 +39,11 @@ function formatRut(rut: string): string {
 export class ModalManager {
   private static instance: ModalManager;
   private mechanicModal: HTMLElement | null;
-  private vehicleModal: HTMLElement | null;
   private mechanicForm: HTMLFormElement | null;
-  private vehicleForm: HTMLFormElement | null;
 
   private constructor() {
     this.mechanicModal = document.getElementById('mechanicModal');
-    this.vehicleModal = document.getElementById('vehicleModal');
     this.mechanicForm = document.getElementById('mechanicForm') as HTMLFormElement;
-    this.vehicleForm = document.getElementById('vehicleForm') as HTMLFormElement;
 
     this.initializeEventListeners();
     this.initializeRutFormatting();
@@ -67,11 +63,8 @@ export class ModalManager {
       this.openModal('mechanicModal');
     });
 
-    // Vehicle Status Button
-    const vehicleStatusBtn = document.getElementById('vehicleStatusBtn');
-    vehicleStatusBtn?.addEventListener('click', () => {
-      this.openModal('vehicleModal');
-    });
+    // Vehicle Status Button - This button now redirects directly from index.astro
+    // No longer handled by modals.ts, so no listener needed here.
 
     // Close Modal Buttons
     document.querySelectorAll('[data-modal-close]').forEach(button => {
@@ -90,29 +83,25 @@ export class ModalManager {
       this.handleMechanicLogin(e);
     });
 
-    this.vehicleForm?.addEventListener('submit', (e) => {
-      e.preventDefault();
-      this.handleVehicleStatus();
-    });
+    // The vehicle status form submission is now handled in index.astro via redirection.
+    // No event listener needed here for vehicleForm submission.
   }
 
   private initializeRutFormatting(): void {
-    const rutInputs = document.querySelectorAll('input[name="rut"]');
-    rutInputs.forEach(input => {
-      // Formatear mientras se escribe
-      input.addEventListener('input', (e) => {
+    const mechanicRutInput = document.getElementById('mechanicRut') as HTMLInputElement;
+    if (mechanicRutInput) {
+      mechanicRutInput.addEventListener('input', (e) => {
         const target = e.target as HTMLInputElement;
         target.value = formatRut(target.value);
       });
 
-      // Asegurar formato correcto antes de enviar
-      input.addEventListener('blur', (e) => {
+      mechanicRutInput.addEventListener('blur', (e) => {
         const target = e.target as HTMLInputElement;
         if (target.value) {
           target.value = formatRut(target.value);
         }
       });
-    });
+    }
   }
 
   private openModal(modalId: string): void {
@@ -141,8 +130,6 @@ export class ModalManager {
       document.body.classList.remove('modal-open');
       if (modalId === 'mechanicModal') {
         this.mechanicForm?.reset();
-      } else if (modalId === 'vehicleModal') {
-        this.vehicleForm?.reset();
       }
     }, 150);
   }
@@ -192,79 +179,7 @@ export class ModalManager {
     }
   }
 
-  private async handleVehicleStatus(): Promise<void> {
-    if (!this.vehicleForm) return;
-
-    const formData = new FormData(this.vehicleForm);
-    const searchData = {
-      rut: formData.get('rut'),
-      patente: formData.get('patente')
-    };
-
-    try {
-      const backendUrl = import.meta.env.PUBLIC_BACKEND_URL;
-      
-      const response = await fetch(`${backendUrl}/api/vehicles/status`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(searchData)
-      });
-
-      if (response.ok) {
-        const vehicleData = await response.json();
-        // Show vehicle status in a modal or redirect to status page
-        this.showVehicleStatus(vehicleData);
-      } else {
-        throw new Error('Vehicle not found');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('No se encontró el vehículo. Por favor, verifique los datos ingresados.');
-    }
-  }
-
-  private showVehicleStatus(vehicleData: any): void {
-    // Create and show a modal with vehicle status
-    const statusModal = document.createElement('div');
-    statusModal.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50';
-    statusModal.innerHTML = `
-      <div class="bg-white p-8 rounded-lg shadow-xl w-[500px]">
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="text-2xl font-bold text-gray-800">Estado del Vehículo</h2>
-          <button type="button" class="text-indigo-400 hover:text-indigo-700 transition-colors p-2 hover:bg-indigo-100 rounded-full" onclick="this.closest('.fixed').remove()">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <div class="space-y-4">
-          <div>
-            <h3 class="text-lg font-semibold text-gray-700">Información del Vehículo</h3>
-            <p class="text-gray-600">Patente: ${vehicleData.patente}</p>
-            <p class="text-gray-600">Marca: ${vehicleData.marca}</p>
-            <p class="text-gray-600">Modelo: ${vehicleData.modelo}</p>
-          </div>
-          <div>
-            <h3 class="text-lg font-semibold text-gray-700">Estado Actual</h3>
-            <p class="text-gray-600">Estado: ${vehicleData.estado}</p>
-            <p class="text-gray-600">Fecha de ingreso: ${new Date(vehicleData.fecha_ingreso).toLocaleDateString()}</p>
-          </div>
-          <div>
-            <h3 class="text-lg font-semibold text-gray-700">Observaciones</h3>
-            <p class="text-gray-600">${vehicleData.observaciones || 'Sin observaciones'}</p>
-          </div>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(statusModal);
-  }
-
   private showError(message: string): void {
-    // Implement the logic to show an error message to the user
-    console.error(message);
     alert(message);
   }
 } 
