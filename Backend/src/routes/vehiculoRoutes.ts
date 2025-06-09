@@ -211,4 +211,35 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
+// Buscar vehículo por RUT y patente
+router.get('/status', async (req, res) => {
+    try {
+        const { rut, patente } = req.query;
+
+        if (!rut || !patente) {
+            return res.status(400).json({ message: 'Se requiere RUT y patente' });
+        }
+
+        const [vehiculos] = await db.execute(
+            `SELECT v.*, c.nombre as cliente_nombre 
+             FROM vehiculos v 
+             INNER JOIN clientes c ON v.cliente_id = c.id 
+             WHERE c.rut = ? AND v.patente = ?`,
+            [rut, patente]
+        );
+
+        if (!vehiculos || (Array.isArray(vehiculos) && vehiculos.length === 0)) {
+            return res.status(404).json({ message: 'Vehículo no encontrado' });
+        }
+
+        return res.json(Array.isArray(vehiculos) ? vehiculos[0] : vehiculos);
+    } catch (error) {
+        console.error('Error al buscar vehículo:', error);
+        return res.status(500).json({ 
+            message: 'Error al buscar vehículo',
+            error: error instanceof Error ? error.message : 'Error desconocido'
+        });
+    }
+});
+
 export default router; 

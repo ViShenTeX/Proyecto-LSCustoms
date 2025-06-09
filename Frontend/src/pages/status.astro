@@ -1,0 +1,194 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Estado del Vehículo">
+  <div class="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
+    <div class="relative py-3 sm:max-w-xl sm:mx-auto">
+      <div class="relative px-4 py-10 bg-white mx-8 md:mx-0 shadow rounded-3xl sm:p-10">
+        <div class="max-w-md mx-auto">
+          <div class="divide-y divide-gray-200">
+            <div class="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
+              <h2 class="text-2xl font-bold mb-8 text-center text-gray-900">Consulta el Estado de tu Vehículo</h2>
+              
+              <form id="statusForm" class="space-y-6">
+                <div>
+                  <label for="rut" class="block text-sm font-medium text-gray-700">RUT</label>
+                  <input type="text" id="rut" name="rut" required
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    placeholder="12.345.678-9">
+                </div>
+
+                <div>
+                  <label for="patente" class="block text-sm font-medium text-gray-700">Patente</label>
+                  <input type="text" id="patente" name="patente" required
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    placeholder="AB-12-34">
+                </div>
+
+                <div class="flex justify-center">
+                  <button type="submit"
+                    class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Consultar Estado
+                  </button>
+                </div>
+              </form>
+
+              <!-- Resultado de la búsqueda -->
+              <div id="searchResult" class="mt-8 hidden">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h3 class="text-lg font-medium text-gray-900 mb-4">Información del Vehículo</h3>
+                  <div id="vehicleInfo" class="space-y-2">
+                    <!-- La información se cargará dinámicamente -->
+                  </div>
+                </div>
+
+                <!-- Galería de fotos -->
+                <div id="photoGallery" class="mt-6 hidden">
+                  <h3 class="text-lg font-medium text-gray-900 mb-4">Fotos del Vehículo</h3>
+                  <div id="photos" class="grid grid-cols-2 gap-4">
+                    <!-- Las fotos se cargarán dinámicamente -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Mensaje de error -->
+              <div id="errorMessage" class="mt-4 text-red-600 text-center hidden">
+                <!-- El mensaje de error se mostrará aquí -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  // Función para formatear RUT
+  function formatRut(rut: string): string {
+    // Eliminar puntos y guión
+    let cleanRut = rut.replace(/[.-]/g, '');
+    
+    // Agregar puntos y guión
+    if (cleanRut.length > 1) {
+      let dv = cleanRut.slice(-1);
+      let rutNumber = cleanRut.slice(0, -1);
+      let rutFormatted = '';
+      
+      for (let i = rutNumber.length; i > 0; i -= 3) {
+        rutFormatted = '.' + rutNumber.slice(Math.max(0, i - 3), i) + rutFormatted;
+      }
+      
+      return rutFormatted.slice(1) + '-' + dv;
+    }
+    
+    return cleanRut;
+  }
+
+  // Función para formatear patente
+  function formatPatente(patente: string): string {
+    // Eliminar guiones
+    let cleanPatente = patente.replace(/-/g, '');
+    
+    // Agregar guiones
+    if (cleanPatente.length > 2) {
+      return cleanPatente.slice(0, 2) + '-' + cleanPatente.slice(2, 4) + '-' + cleanPatente.slice(4);
+    }
+    
+    return cleanPatente;
+  }
+
+  // Event listeners para formateo automático
+  const rutInput = document.getElementById('rut') as HTMLInputElement;
+  const patenteInput = document.getElementById('patente') as HTMLInputElement;
+
+  rutInput?.addEventListener('input', (e) => {
+    const target = e.target as HTMLInputElement;
+    target.value = formatRut(target.value);
+  });
+
+  patenteInput?.addEventListener('input', (e) => {
+    const target = e.target as HTMLInputElement;
+    target.value = formatPatente(target.value);
+  });
+
+  // Manejo del formulario
+  const form = document.getElementById('statusForm') as HTMLFormElement;
+  const searchResult = document.getElementById('searchResult');
+  const vehicleInfo = document.getElementById('vehicleInfo');
+  const photoGallery = document.getElementById('photoGallery');
+  const photos = document.getElementById('photos');
+  const errorMessage = document.getElementById('errorMessage');
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(form);
+    const rut = formData.get('rut') as string;
+    const patente = formData.get('patente') as string;
+
+    try {
+      const response = await fetch(`/api/vehiculos/status?rut=${encodeURIComponent(rut)}&patente=${encodeURIComponent(patente)}`);
+      
+      if (!response.ok) {
+        throw new Error('Vehículo no encontrado');
+      }
+
+      const vehicle = await response.json();
+      
+      // Mostrar información del vehículo
+      if (vehicleInfo) {
+        vehicleInfo.innerHTML = `
+          <p class="text-sm font-medium text-gray-700">Patente: ${vehicle.patente}</p>
+          <p class="text-sm font-medium text-gray-700">Marca: ${vehicle.marca}</p>
+          <p class="text-sm font-medium text-gray-700">Modelo: ${vehicle.modelo}</p>
+          <p class="text-sm font-medium text-gray-700">Estado: 
+            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-${getStatusColor(vehicle.estado)}-100 text-${getStatusColor(vehicle.estado)}-800">
+              ${vehicle.estado}
+            </span>
+          </p>
+          <p class="text-sm font-medium text-gray-700">Observaciones: ${vehicle.observaciones || 'Sin observaciones'}</p>
+        `;
+      }
+
+      // Mostrar fotos si existen
+      if (vehicle.imagen) {
+        if (photoGallery) photoGallery.classList.remove('hidden');
+        if (photos) {
+          photos.innerHTML = `
+            <div class="relative">
+              <img src="${vehicle.imagen}" alt="Foto del vehículo" class="w-full h-48 object-cover rounded-lg">
+            </div>
+          `;
+        }
+      } else {
+        if (photoGallery) photoGallery.classList.add('hidden');
+      }
+
+      // Mostrar resultado y ocultar error
+      if (searchResult) searchResult.classList.remove('hidden');
+      if (errorMessage) errorMessage.classList.add('hidden');
+
+    } catch (error) {
+      // Mostrar error y ocultar resultado
+      if (errorMessage) {
+        errorMessage.textContent = error instanceof Error ? error.message : 'Error al buscar el vehículo';
+        errorMessage.classList.remove('hidden');
+      }
+      if (searchResult) searchResult.classList.add('hidden');
+    }
+  });
+
+  // Función para obtener el color según el estado
+  function getStatusColor(status: string): string {
+    const colors: { [key: string]: string } = {
+      'En espera': 'yellow',
+      'En revisión': 'blue',
+      'En reparación': 'purple',
+      'Listo para entrega': 'green',
+      'Entregado': 'gray'
+    };
+    return colors[status] || 'gray';
+  }
+</script> 
