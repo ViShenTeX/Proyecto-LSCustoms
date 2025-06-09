@@ -17,5 +17,6 @@
     },
     "types": ["astro/client", "node", "react"],
     "lib": ["esnext", "dom"]
-  }
+  },
+  "exclude": ["src/pages/admin/mechanics.astro"]
 } 

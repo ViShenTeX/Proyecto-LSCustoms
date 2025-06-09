@@ -34,6 +34,7 @@ app.use('/api/mechanics', mechanicRoutes);
 app.use('/api/clientes', clienteRoutes);
 app.use('/api/vehiculos', vehiculoRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/mecanicos', mechanicRoutes);
 
 // Ruta de prueba
 app.get('/api/health', (_req: express.Request, res: express.Response) => {
