@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { AppDataSource } from '../config/data-source';
+import { Mechanic } from '../models/Mechanic';
 
 interface JwtPayload {
   id: number;
@@ -15,22 +17,35 @@ declare global {
   }
 }
 
-export const auth = (req: Request, res: Response, next: NextFunction): void => {
-  try {
-    const token = req.header('x-auth-token');
+export const authMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            res.status(401).json({ message: 'No token provided' });
+            return;
+        }
 
-    if (!token) {
-      res.status(401).json({ message: 'No hay token, autorización denegada' });
-      return;
+        const token = authHeader.split(' ')[1];
+        if (!token) {
+            res.status(401).json({ message: 'Invalid token format' });
+            return;
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret') as any;
+        const mechanicRepository = AppDataSource.getRepository(Mechanic);
+        const mechanic = await mechanicRepository.findOneBy({ id: decoded.id });
+
+        if (!mechanic) {
+            res.status(401).json({ message: 'User not found' });
+            return;
+        }
+
+        req.user = mechanic;
+        next();
+    } catch (error) {
+        res.status(401).json({ message: 'Invalid token' });
+        return;
     }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret') as JwtPayload;
-    req.mechanic = decoded;
-    next();
-  } catch (error) {
-    res.status(401).json({ message: 'Token no válido' });
-    return;
-  }
 };
 
 export const isAdmin = (req: Request, res: Response, next: NextFunction): void => {

@@ -65,7 +65,25 @@ export class VehicleManager {
 
   private async loadVehicles(): Promise<void> {
     try {
-      const response = await fetch('/api/vehicles');
+      const token = localStorage.getItem('mechanicToken');
+      if (!token) {
+        window.location.href = '/';
+        return;
+      }
+
+      const response = await fetch('/api/vehiculos', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.status === 401) {
+        // Token expired or invalid
+        localStorage.removeItem('mechanicToken');
+        window.location.href = '/';
+        return;
+      }
+
       const vehicles = await response.json();
       this.renderVehicles(vehicles);
     } catch (error) {

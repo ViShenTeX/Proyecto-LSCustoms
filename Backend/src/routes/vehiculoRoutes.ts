@@ -3,9 +3,13 @@ import { AppDataSource } from '../config/data-source';
 import { Vehiculo } from '../models/Vehiculo';
 import multer from 'multer';
 import path from 'path';
+import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
 const vehiculoRepository = AppDataSource.getRepository(Vehiculo);
+
+// Apply auth middleware to all routes
+router.use(authMiddleware);
 
 // Configuración de multer para subida de imágenes
 const storage = multer.diskStorage({

@@ -198,6 +198,13 @@ import '../styles/global.css';
   import { VehicleManager } from '../scripts/vehicles';
   
   document.addEventListener('DOMContentLoaded', () => {
+    // Check authentication
+    const token = localStorage.getItem('mechanicToken');
+    if (!token) {
+      window.location.href = '/';
+      return;
+    }
+    
     VehicleManager.getInstance();
   });
 </script> 
