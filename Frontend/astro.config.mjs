@@ -11,7 +11,8 @@ export default defineConfig({
     },
     css: {
       postcss: {},
-    }
+    },
+    envPrefix: 'PUBLIC_'
   },
   devToolbar: {
     enabled: false
