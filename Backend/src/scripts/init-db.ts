@@ -64,6 +64,14 @@ async function initDatabase() {
       console.log('El administrador inicial ya existe');
     }
 
+    // Actualizar rol del admin existente
+    await db.execute(`
+        UPDATE mechanics 
+        SET rol = 'admin' 
+        WHERE rut = '21.430.534-8'
+    `);
+    console.log('Rol de admin actualizado');
+
     process.exit(0);
   } catch (error) {
     console.error('Error al inicializar la base de datos:', error);
