@@ -1,24 +1,42 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { Mechanic } from '../models/Mechanic';
+import db from '../config/database';
+import bcrypt from 'bcrypt';
 
-export const registerMechanic = async (req: Request, res: Response): Promise<void> => {
+export const registerMechanic = async (req: Request, res: Response): Promise<Response | void> => {
   try {
-    const { rut, pin, name, role } = req.body;
+    if (req.mechanic?.role !== 'admin') {
+      return res.status(403).json({ message: 'No tienes permisos para crear mecánicos' });
+    }
 
-    // Verificar si el mecánico ya existe
-    const existingMechanic = await Mechanic.findByRut(rut);
-    if (existingMechanic) {
-      res.status(400).json({ message: 'El RUT ya está registrado' });
+    const { name, rut, pin, role } = req.body;
+
+    // Verificar si ya existe un mecánico con ese RUT
+    const [existing] = await db.execute(
+      'SELECT id FROM mechanics WHERE rut = ?',
+      [rut]
+    );
+
+    if (Array.isArray(existing) && existing.length > 0) {
+      res.status(400).json({ message: 'Ya existe un mecánico con ese RUT' });
       return;
     }
 
+    // Hash del PIN
+    const hashedPin = await bcrypt.hash(pin, 10);
+
     // Crear nuevo mecánico
-    const mechanicId = await Mechanic.create({ rut, pin, name, role });
+    const [result]: any = await db.execute(
+      'INSERT INTO mechanics (name, rut, pin, role, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())',
+      [name, rut, hashedPin, role || 'mecanico']
+    );
 
     res.status(201).json({
-      message: 'Mecánico registrado exitosamente',
-      mechanicId
+      id: result.insertId,
+      name,
+      rut,
+      role: role || 'mecanico'
     });
   } catch (error) {
     console.error('Error al registrar mecánico:', error);
@@ -26,7 +44,7 @@ export const registerMechanic = async (req: Request, res: Response): Promise<voi
   }
 };
 
-export const loginMechanic = async (req: Request, res: Response): Promise<void> => {
+export const loginMechanic = async (req: Request, res: Response): Promise<Response | void> => {
   try {
     const { rut, pin } = req.body;
 
@@ -37,14 +55,8 @@ export const loginMechanic = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // Verificar si el mecánico está activo
-    if (!mechanic.activo) {
-      res.status(401).json({ message: 'Cuenta desactivada' });
-      return;
-    }
-
     // Verificar PIN
-    const isMatch = await Mechanic.comparePin(pin, mechanic.password);
+    const isMatch = await Mechanic.comparePin(pin, mechanic.pin);
     if (!isMatch) {
       res.status(401).json({ message: 'Credenciales inválidas' });
       return;
@@ -55,7 +67,7 @@ export const loginMechanic = async (req: Request, res: Response): Promise<void> 
       { 
         id: mechanic.id,
         rut: mechanic.rut,
-        role: mechanic.rol 
+        role: mechanic.role 
       },
       process.env.JWT_SECRET || 'default_secret',
       { expiresIn: '8h' }
@@ -67,8 +79,8 @@ export const loginMechanic = async (req: Request, res: Response): Promise<void> 
       mechanic: {
         id: mechanic.id,
         rut: mechanic.rut,
-        name: mechanic.nombre,
-        role: mechanic.rol
+        name: mechanic.name,
+        role: mechanic.role
       }
     });
   } catch (error) {
@@ -77,7 +89,7 @@ export const loginMechanic = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-export const getMechanicProfile = async (req: Request, res: Response): Promise<void> => {
+export const getMechanicProfile = async (req: Request, res: Response): Promise<Response | void> => {
   try {
     const mechanicId = (req as any).mechanic.id;
     const mechanic = await Mechanic.findById(mechanicId);
@@ -90,11 +102,40 @@ export const getMechanicProfile = async (req: Request, res: Response): Promise<v
     res.json({
       id: mechanic.id,
       rut: mechanic.rut,
-      name: mechanic.nombre,
-      role: mechanic.rol
+      name: mechanic.name,
+      role: mechanic.role
     });
   } catch (error) {
     console.error('Error al obtener perfil:', error);
     res.status(500).json({ message: 'Error al obtener perfil' });
+  }
+};
+
+export const deleteMechanic = async (req: Request, res: Response): Promise<Response | void> => {
+  try {
+    if (req.mechanic?.role !== 'admin') {
+      return res.status(403).json({ message: 'No tienes permisos para eliminar mecánicos' });
+    }
+
+    // No permitir eliminar el propio usuario
+    if (req.mechanic.id === parseInt(req.params.id)) {
+      res.status(400).json({ message: 'No puedes eliminar tu propia cuenta' });
+      return;
+    }
+
+    const [result]: any = await db.execute(
+      'DELETE FROM mechanics WHERE id = ?',
+      [req.params.id]
+    );
+
+    if (result.affectedRows === 0) {
+      res.status(404).json({ message: 'Mecánico no encontrado' });
+      return;
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error al eliminar mecánico:', error);
+    res.status(500).json({ message: 'Error al eliminar mecánico' });
   }
 }; 

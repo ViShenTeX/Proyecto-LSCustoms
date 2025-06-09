@@ -27,14 +27,12 @@ export class Mechanic {
     @UpdateDateColumn()
     updatedAt: Date;
 
-    constructor(id: number, name: string, rut: string, pin: string, role: string) {
-        this.id = id;
-        this.name = name;
-        this.rut = rut;
-        this.pin = pin;
-        this.role = role;
-        this.createdAt = new Date();
-        this.updatedAt = new Date();
+    constructor(data: any) {
+        this.id = data.id;
+        this.name = data.name;
+        this.rut = data.rut;
+        this.pin = data.pin;
+        this.role = data.role;
     }
 
     async validatePassword(pin: string): Promise<boolean> {
@@ -49,35 +47,16 @@ export class Mechanic {
         return bcrypt.hash(pin, 10);
     }
 
-    static async comparePin(pin: string, hashedPin: string): Promise<boolean> {
-        return bcrypt.compare(pin, hashedPin);
+    static async comparePin(inputPin: string, storedPin: string): Promise<boolean> {
+        return bcrypt.compare(inputPin, storedPin);
     }
 
     static async findByRut(rut: string): Promise<Mechanic | null> {
-        try {
-            const [rows]: any = await db.execute(
-                'SELECT * FROM mechanics WHERE rut = ?',
-                [rut]
-            );
-
-            if (!rows || rows.length === 0) {
-                return null;
-            }
-
-            const mechanicData = rows[0];
-            console.log('Mechanic data from DB:', mechanicData);
-
-            return new Mechanic(
-                mechanicData.id,
-                mechanicData.name,
-                mechanicData.rut,
-                mechanicData.pin,
-                mechanicData.role
-            );
-        } catch (error) {
-            console.error('Error finding mechanic by RUT:', error);
-            return null;
-        }
+        const [rows]: any = await db.execute(
+            'SELECT * FROM mechanics WHERE rut = ?',
+            [rut]
+        );
+        return rows.length > 0 ? new Mechanic(rows[0]) : null;
     }
 
     static async create(data: { rut: string, pin: string, nombre: string, role: MechanicRole }): Promise<number> {
@@ -93,13 +72,7 @@ export class Mechanic {
         const [rows]: any = await db.execute('SELECT * FROM mechanics WHERE id = ?', [id]);
         if (rows.length === 0) return null;
         const mechanicData = rows[0];
-        const mechanic = new Mechanic(
-            mechanicData.id,
-            mechanicData.name,
-            mechanicData.rut,
-            mechanicData.pin,
-            mechanicData.role
-        );
+        const mechanic = new Mechanic(mechanicData);
         mechanic.createdAt = new Date(mechanicData.created_at);
         mechanic.updatedAt = new Date(mechanicData.updated_at);
         return mechanic;
