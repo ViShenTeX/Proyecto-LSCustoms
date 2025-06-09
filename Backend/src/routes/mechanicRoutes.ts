@@ -19,7 +19,7 @@ router.get('/profile', auth, getMechanicProfile);
 router.get('/', authMiddleware, async (_req, res) => {
     try {
         const mechanics = await mechanicRepository.find({
-            select: ['id', 'nombre', 'apellido', 'email', 'especialidad', 'activo', 'createdAt']
+            select: ['id', 'nombre', 'apellido', 'rut', 'especialidad', 'activo', 'createdAt']
         });
         res.json(mechanics);
     } catch (error) {
@@ -32,7 +32,7 @@ router.get('/:id', authMiddleware, async (req: any, res: any) => {
     try {
         const mechanic = await mechanicRepository.findOne({
             where: { id: parseInt(req.params.id) },
-            select: ['id', 'nombre', 'apellido', 'email', 'especialidad', 'activo', 'createdAt']
+            select: ['id', 'nombre', 'apellido', 'rut', 'especialidad', 'activo', 'createdAt']
         });
         if (!mechanic) return res.status(404).json({ message: 'Mecánico no encontrado' });
         res.json(mechanic);

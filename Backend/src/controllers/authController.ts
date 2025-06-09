@@ -7,8 +7,8 @@ const mechanicRepository = AppDataSource.getRepository(Mechanic);
 
 export const login = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { email, password } = req.body;
-        const mechanic = await mechanicRepository.findOneBy({ email });
+        const { rut, password } = req.body;
+        const mechanic = await mechanicRepository.findOneBy({ rut });
 
         if (!mechanic) {
             res.status(401).json({ message: 'Credenciales inválidas' });
@@ -22,7 +22,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         }
 
         const token = jwt.sign(
-            { id: mechanic.id, email: mechanic.email },
+            { id: mechanic.id, rut: mechanic.rut },
             process.env.JWT_SECRET || 'default_secret',
             { expiresIn: '24h' }
         );
@@ -33,7 +33,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
                 id: mechanic.id,
                 nombre: mechanic.nombre,
                 apellido: mechanic.apellido,
-                email: mechanic.email,
+                rut: mechanic.rut,
                 especialidad: mechanic.especialidad
             }
         });
@@ -45,18 +45,18 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
 export const register = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { nombre, apellido, email, password, especialidad } = req.body;
+        const { nombre, apellido, rut, password, especialidad } = req.body;
         
-        const existingMechanic = await mechanicRepository.findOneBy({ email });
+        const existingMechanic = await mechanicRepository.findOneBy({ rut });
         if (existingMechanic) {
-            res.status(400).json({ message: 'El email ya existe' });
+            res.status(400).json({ message: 'El RUT ya existe' });
             return;
         }
 
         const mechanic = mechanicRepository.create({
             nombre,
             apellido,
-            email,
+            rut,
             password,
             especialidad
         });

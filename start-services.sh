@@ -10,6 +10,9 @@ sudo fuser -k 3000/tcp || true
 
 # Start Node.js service first
 cd $NODE_DIR
+echo "Building backend..."
+npm run build
+echo "Starting backend..."
 screen -dmS nodejs bash -c 'PORT=3000 npm start'
 
 # Wait for backend to be ready
@@ -21,4 +24,5 @@ echo "Backend is ready!"
 
 # Start Astro service
 cd $ASTRO_DIR
+echo "Starting frontend..."
 screen -dmS astro bash -c 'npm run dev -- --host --port 80' 

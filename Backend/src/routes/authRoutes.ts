@@ -35,8 +35,8 @@ export const authMiddleware = async (req: Request, res: Response, next: Function
 // Login
 router.post('/login', async (req: Request, res: Response): Promise<void> => {
     try {
-        const { email, password } = req.body;
-        const mechanic = await mechanicRepository.findOneBy({ email });
+        const { rut, password } = req.body;
+        const mechanic = await mechanicRepository.findOneBy({ rut });
 
         if (!mechanic) {
             res.status(401).json({ message: 'Invalid credentials' });
@@ -50,7 +50,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
         }
 
         const token = jwt.sign(
-            { id: mechanic.id, email: mechanic.email },
+            { id: mechanic.id, rut: mechanic.rut },
             process.env.JWT_SECRET || 'default_secret',
             { expiresIn: '24h' }
         );
@@ -61,7 +61,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
                 id: mechanic.id,
                 nombre: mechanic.nombre,
                 apellido: mechanic.apellido,
-                email: mechanic.email,
+                rut: mechanic.rut,
                 especialidad: mechanic.especialidad
             }
         });
@@ -74,18 +74,18 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
 // Registro de mecánico (solo para administradores)
 router.post('/register', authMiddleware, async (req: Request, res: Response): Promise<void> => {
     try {
-        const { nombre, apellido, email, password, especialidad } = req.body;
+        const { nombre, apellido, rut, password, especialidad } = req.body;
         
-        const existingMechanic = await mechanicRepository.findOneBy({ email });
+        const existingMechanic = await mechanicRepository.findOneBy({ rut });
         if (existingMechanic) {
-            res.status(400).json({ message: 'Email already exists' });
+            res.status(400).json({ message: 'RUT already exists' });
             return;
         }
 
         const mechanic = mechanicRepository.create({
             nombre,
             apellido,
-            email,
+            rut,
             password,
             especialidad
         });
