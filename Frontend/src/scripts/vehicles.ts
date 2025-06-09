@@ -185,6 +185,12 @@ export class VehicleManager {
   private async handleFormSubmit(): Promise<void> {
     if (!this.vehicleForm) return;
 
+    const token = localStorage.getItem('mechanicToken');
+    if (!token) {
+      this.showError('No hay sesión activa');
+      return;
+    }
+
     const formData = new FormData(this.vehicleForm);
     const vehicleData = {
       patente: formData.get('patente'),
@@ -201,6 +207,7 @@ export class VehicleManager {
       const response = await fetch(url, {
         method: method,
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(vehicleData)
@@ -216,11 +223,12 @@ export class VehicleManager {
         this.closeModal();
         this.loadVehicles();
       } else {
-        throw new Error('Error saving vehicle');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Error saving vehicle');
       }
     } catch (error) {
       console.error('Error:', error);
-      // Show error message to user
+      this.showError(error instanceof Error ? error.message : 'Error al guardar el vehículo');
     }
   }
 
