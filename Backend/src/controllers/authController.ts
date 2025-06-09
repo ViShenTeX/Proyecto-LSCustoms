@@ -1,70 +1,70 @@
 import { Request, Response } from 'express';
-import { AppDataSource } from '../config/data-source';
 import { Mechanic } from '../models/Mechanic';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 
-const mechanicRepository = AppDataSource.getRepository(Mechanic);
-
-export const login = async (req: Request, res: Response): Promise<void> => {
+export const login = async (req: Request, res: Response): Promise<Response | void> => {
     try {
-        const { rut, password } = req.body;
-        const mechanic = await mechanicRepository.findOneBy({ rut });
+        const { rut, pin } = req.body;
+        const mechanic = await Mechanic.findByRut(rut);
 
         if (!mechanic) {
-            res.status(401).json({ message: 'Credenciales inválidas' });
-            return;
+            return res.status(401).json({ message: 'Credenciales inválidas' });
         }
 
-        const isValidPassword = await mechanic.validatePassword(password);
-        if (!isValidPassword) {
-            res.status(401).json({ message: 'Credenciales inválidas' });
-            return;
+        const isValidPin = await Mechanic.comparePin(pin, mechanic.pin);
+        if (!isValidPin) {
+            return res.status(401).json({ message: 'Credenciales inválidas' });
         }
 
         const token = jwt.sign(
-            { id: mechanic.id, rut: mechanic.rut },
+            { 
+                id: mechanic.id,
+                rut: mechanic.rut,
+                role: mechanic.role
+            },
             process.env.JWT_SECRET || 'default_secret',
-            { expiresIn: '24h' }
+            { expiresIn: '8h' }
         );
 
-        res.json({
+        return res.json({
             token,
             mechanic: {
                 id: mechanic.id,
-                nombre: mechanic.nombre,
-                apellido: mechanic.apellido,
+                name: mechanic.name,
                 rut: mechanic.rut,
-                especialidad: mechanic.especialidad
+                role: mechanic.role
             }
         });
     } catch (error) {
-        res.status(500).json({ message: 'Error en el login' });
-        return;
+        console.error('Error en login:', error);
+        return res.status(500).json({ message: 'Error en el servidor' });
     }
 };
 
-export const register = async (req: Request, res: Response): Promise<void> => {
+export const register = async (req: Request, res: Response): Promise<Response | void> => {
     try {
-        const { nombre, apellido, rut, password, especialidad } = req.body;
-        
-        const existingMechanic = await mechanicRepository.findOneBy({ rut });
+        const { name, rut, pin, role } = req.body;
+
+        const existingMechanic = await Mechanic.findByRut(rut);
         if (existingMechanic) {
-            res.status(400).json({ message: 'El RUT ya existe' });
-            return;
+            return res.status(400).json({ message: 'Ya existe un mecánico con este RUT' });
         }
 
-        const mechanic = mechanicRepository.create({
-            nombre,
-            apellido,
+        const hashedPin = await bcrypt.hash(pin, 10);
+        const mechanicId = await Mechanic.create({
+            name,
             rut,
-            password,
-            especialidad
+            pin: hashedPin,
+            role: role || 'mecanico'
         });
 
-        await mechanicRepository.save(mechanic);
-        res.status(201).json({ message: 'Mecánico registrado exitosamente' });
+        return res.status(201).json({
+            message: 'Mecánico registrado exitosamente',
+            mechanicId
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error al registrar mecánico' });
-        return;
+        console.error('Error en registro:', error);
+        return res.status(500).json({ message: 'Error en el servidor' });
     }
 }; 

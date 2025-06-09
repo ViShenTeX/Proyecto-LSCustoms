@@ -59,11 +59,11 @@ export class Mechanic {
         return rows.length > 0 ? new Mechanic(rows[0]) : null;
     }
 
-    static async create(data: { rut: string, pin: string, nombre: string, role: MechanicRole }): Promise<number> {
+    static async create(data: { rut: string, pin: string, name: string, role: MechanicRole }): Promise<number> {
         const hashedPin = await bcrypt.hash(data.pin, 10);
         const [result]: any = await db.execute(
-            'INSERT INTO mechanics (rut, pin, nombre, role) VALUES (?, ?, ?, ?)',
-            [data.rut, hashedPin, data.nombre, data.role]
+            'INSERT INTO mechanics (rut, pin, name, role) VALUES (?, ?, ?, ?)',
+            [data.rut, hashedPin, data.name, data.role]
         );
         return result.insertId;
     }
