@@ -2,11 +2,15 @@ export class VehicleManager {
   private static instance: VehicleManager;
   private vehicleModal: HTMLElement | null;
   private vehicleModalContent: HTMLElement | null;
+  private editVehicleModal: HTMLElement | null;
+  private editVehicleModalContent: HTMLElement | null;
   private vehicleForm: HTMLFormElement | null;
+  private editVehicleForm: HTMLFormElement | null;
   private vehicleList: HTMLElement | null;
   private addVehicleBtn: HTMLElement | null;
   private logoutBtn: HTMLElement | null;
   private imagePreview: HTMLElement | null;
+  private editImagePreview: HTMLElement | null;
   private selectedFiles: File[] = [];
   private API_BASE_URL = '/api';
   private currentVehicleId: string | null = null;
@@ -14,11 +18,15 @@ export class VehicleManager {
   private constructor() {
     this.vehicleModal = document.getElementById('vehicleModal');
     this.vehicleModalContent = document.getElementById('vehicleModalContent');
+    this.editVehicleModal = document.getElementById('editVehicleModal');
+    this.editVehicleModalContent = document.getElementById('editVehicleModalContent');
     this.vehicleForm = document.getElementById('vehicleForm') as HTMLFormElement;
+    this.editVehicleForm = document.getElementById('editVehicleForm') as HTMLFormElement;
     this.vehicleList = document.getElementById('vehicleList');
     this.addVehicleBtn = document.getElementById('addVehicleBtn');
     this.logoutBtn = document.getElementById('logoutBtn');
     this.imagePreview = document.getElementById('imagePreview');
+    this.editImagePreview = document.getElementById('editImagePreview');
 
     this.initializeEventListeners();
     this.loadVehicles();
@@ -36,7 +44,6 @@ export class VehicleManager {
     this.addVehicleBtn?.addEventListener('click', () => {
       this.currentVehicleId = null;
       this.openModal();
-      this.showAllFields();
     });
 
     // Close Modal Buttons
@@ -46,10 +53,21 @@ export class VehicleManager {
       });
     });
 
+    document.querySelectorAll('[data-modal-close="editVehicleModal"]').forEach(button => {
+      button.addEventListener('click', () => {
+        this.closeEditModal();
+      });
+    });
+
     // Form Submit
     this.vehicleForm?.addEventListener('submit', (e) => {
       e.preventDefault();
       this.handleFormSubmit();
+    });
+
+    this.editVehicleForm?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.handleEditFormSubmit();
     });
 
     // File Upload
@@ -58,6 +76,14 @@ export class VehicleManager {
       const target = e.target as HTMLInputElement;
       if (target.files) {
         this.handleFileUpload(Array.from(target.files));
+      }
+    });
+
+    const editFileInput = document.getElementById('edit-file-upload') as HTMLInputElement;
+    editFileInput?.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files) {
+        this.handleEditFileUpload(Array.from(target.files));
       }
     });
 
@@ -187,26 +213,55 @@ export class VehicleManager {
     });
   }
 
-  private showAllFields(): void {
-    const fields = ['patente', 'marca', 'modelo', 'estado', 'observaciones', 'rut', 'nombre', 'telefono'];
-    fields.forEach(field => {
-      const element = document.getElementById(field)?.parentElement;
-      if (element) element.style.display = 'block';
-    });
+  private openEditModal(): void {
+    if (!this.editVehicleModal || !this.editVehicleModalContent) return;
+    
+    this.editVehicleModal.classList.remove('modal-hidden');
+    this.editVehicleModalContent.style.transform = 'scale(1)';
+    this.editVehicleModalContent.style.opacity = '1';
+    document.body.classList.add('modal-open');
   }
 
-  private showEditFields(): void {
-    const editFields = ['estado', 'observaciones'];
-    const createFields = ['patente', 'marca', 'modelo', 'rut', 'nombre', 'telefono'];
+  private closeEditModal(): void {
+    if (!this.editVehicleModal || !this.editVehicleModalContent) return;
     
-    editFields.forEach(field => {
-      const element = document.getElementById(field)?.parentElement;
-      if (element) element.style.display = 'block';
-    });
+    this.editVehicleModalContent.style.transform = 'scale(0.95)';
+    this.editVehicleModalContent.style.opacity = '0';
+    
+    setTimeout(() => {
+      this.editVehicleModal?.classList.add('modal-hidden');
+      document.body.classList.remove('modal-open');
+      this.resetEditForm();
+    }, 150);
+  }
 
-    createFields.forEach(field => {
-      const element = document.getElementById(field)?.parentElement;
-      if (element) element.style.display = 'none';
+  private resetEditForm(): void {
+    if (!this.editVehicleForm) return;
+    
+    this.editVehicleForm.reset();
+    this.selectedFiles = [];
+    if (this.editImagePreview) {
+      this.editImagePreview.innerHTML = '';
+    }
+  }
+
+  private handleEditFileUpload(files: File[]): void {
+    if (!this.editImagePreview) return;
+
+    files.forEach(file => {
+      if (file.type.startsWith('image/')) {
+        this.selectedFiles.push(file);
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+          const img = document.createElement('img');
+          img.src = e.target?.result as string;
+          img.className = 'w-full h-24 object-cover rounded-lg';
+          this.editImagePreview?.appendChild(img);
+        };
+        
+        reader.readAsDataURL(file);
+      }
     });
   }
 
@@ -232,14 +287,28 @@ export class VehicleManager {
       this.currentVehicleId = id;
       
       // Llenar el formulario con los datos del vehículo
-      if (this.vehicleForm) {
-        const formData = new FormData(this.vehicleForm);
-        formData.set('estado', vehicle.estado);
-        formData.set('observaciones', vehicle.observaciones || '');
+      if (this.editVehicleForm) {
+        const estadoSelect = this.editVehicleForm.querySelector('#edit-estado') as HTMLSelectElement;
+        const observacionesInput = this.editVehicleForm.querySelector('#edit-observaciones') as HTMLTextAreaElement;
+        
+        if (estadoSelect) estadoSelect.value = vehicle.estado;
+        if (observacionesInput) observacionesInput.value = vehicle.observaciones || '';
+
+        // Mostrar información del vehículo
+        const vehicleInfo = this.editVehicleForm.querySelector('#vehicle-info');
+        if (vehicleInfo) {
+          vehicleInfo.innerHTML = `
+            <div class="mb-4">
+              <p class="text-sm font-medium text-gray-700">Patente: ${vehicle.patente}</p>
+              <p class="text-sm font-medium text-gray-700">Marca: ${vehicle.marca}</p>
+              <p class="text-sm font-medium text-gray-700">Modelo: ${vehicle.modelo}</p>
+              <p class="text-sm font-medium text-gray-700">Cliente: ${vehicle.cliente_nombre}</p>
+            </div>
+          `;
+        }
       }
 
-      this.showEditFields();
-      this.openModal();
+      this.openEditModal();
     } catch (error) {
       console.error('Error:', error);
       this.showError('Error al cargar el vehículo');
@@ -357,6 +426,50 @@ export class VehicleManager {
       });
     } catch (error) {
       console.error('Error uploading images:', error);
+    }
+  }
+
+  private async handleEditFormSubmit(): Promise<void> {
+    if (!this.editVehicleForm || !this.currentVehicleId) return;
+
+    const token = localStorage.getItem('mechanicToken');
+    if (!token) {
+      this.showError('No hay sesión activa');
+      return;
+    }
+
+    const formData = new FormData(this.editVehicleForm);
+    const vehicleData = {
+      estado: formData.get('estado'),
+      observaciones: formData.get('observaciones')
+    };
+
+    try {
+      const response = await fetch(`${this.API_BASE_URL}/vehiculos/${this.currentVehicleId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(vehicleData)
+      });
+
+      if (response.ok) {
+        // Upload images if any
+        if (this.selectedFiles.length > 0) {
+          await this.uploadImages(this.currentVehicleId, this.selectedFiles);
+        }
+        
+        this.closeEditModal();
+        this.loadVehicles();
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Error response:', errorData);
+        throw new Error(errorData.message || 'Error saving vehicle');
+      }
+    } catch (error) {
+      console.error('Error completo:', error);
+      this.showError(error instanceof Error ? error.message : 'Error al guardar el vehículo');
     }
   }
 
