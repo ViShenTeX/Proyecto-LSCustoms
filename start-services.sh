@@ -8,10 +8,13 @@ NODE_DIR="/home/ec2-user/Proyecto-LSCustoms/Backend"
 sudo fuser -k 80/tcp || true
 sudo fuser -k 3000/tcp || true
 
+# Start Node.js service first
+cd $NODE_DIR
+screen -dmS nodejs bash -c 'npm start'
+
+# Wait a few seconds for the backend to start
+sleep 5
+
 # Start Astro service
 cd $ASTRO_DIR
-screen -dmS astro bash -c 'npm run dev -- --host --port 80'
-
-# Start Node.js service
-cd $NODE_DIR
-screen -dmS nodejs bash -c 'npm start' 
+screen -dmS astro bash -c 'npm run dev -- --host --port 80' 

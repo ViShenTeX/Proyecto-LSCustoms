@@ -162,9 +162,7 @@ export class ModalManager {
     };
 
     try {
-      const backendUrl = import.meta.env.PUBLIC_BACKEND_URL;
-      
-      const response = await fetch(`${backendUrl}/api/mechanics/login`, {
+      const response = await fetch('/api/mechanics/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
