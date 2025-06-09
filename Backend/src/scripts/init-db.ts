@@ -7,14 +7,15 @@ async function initDatabase() {
     await db.execute(`
       CREATE TABLE IF NOT EXISTS mechanics (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        rut VARCHAR(20) NOT NULL UNIQUE,
         nombre VARCHAR(100) NOT NULL,
+        rut VARCHAR(20) NOT NULL UNIQUE,
         pin VARCHAR(255) NOT NULL,
-        rol ENUM('mecanico', 'admin') DEFAULT 'mecanico',
+        role ENUM('mecanico', 'admin') DEFAULT 'mecanico',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
     `);
+    console.log('Tabla de mecánicos creada o verificada');
 
     // Crear tabla de clientes
     await db.execute(`
@@ -46,31 +47,14 @@ async function initDatabase() {
 
     console.log('Tablas creadas exitosamente');
 
-    // Verificar si el administrador ya existe
-    const [existingAdmin] = await db.execute(
-      'SELECT * FROM mechanics WHERE rut = ?',
-      ['21.430.534-8']
-    );
-
-    if (!existingAdmin || (Array.isArray(existingAdmin) && existingAdmin.length === 0)) {
-      // Crear el administrador
-      const hashedPin = await bcrypt.hash('103003', 10);
-      await db.execute(
-        'INSERT INTO mechanics (rut, pin, name, role) VALUES (?, ?, ?, ?)',
-        ['21.430.534-8', hashedPin, 'Vichicho', 'admin']
-      );
-      console.log('Administrador inicial creado exitosamente');
-    } else {
-      console.log('El administrador inicial ya existe');
-    }
-
-    // Actualizar rol del admin existente
+    // Crear usuario admin por defecto
+    const adminPin = await bcrypt.hash('1234', 10);
     await db.execute(`
-        UPDATE mechanics 
-        SET role = 'admin' 
-        WHERE rut = '21.430.534-8'
-    `);
-    console.log('Rol de admin actualizado');
+        INSERT INTO mechanics (nombre, rut, pin, role, created_at, updated_at)
+        VALUES ('Admin', '21.430.534-8', ?, 'admin', NOW(), NOW())
+        ON DUPLICATE KEY UPDATE role = 'admin'
+    `, [adminPin]);
+    console.log('Usuario admin creado o actualizado');
 
     process.exit(0);
   } catch (error) {

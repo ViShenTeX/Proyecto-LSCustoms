@@ -11,14 +11,21 @@ router.use(authMiddleware);
 // Obtener todos los mecánicos
 router.get('/', async (_req, res) => {
     try {
+        console.log('Intentando obtener lista de mecánicos...');
+        
         const [mechanics] = await db.execute(`
             SELECT id, nombre, rut, role 
             FROM mechanics
         `);
+        
+        console.log('Mecánicos encontrados:', mechanics);
         return res.json(mechanics);
     } catch (error) {
-        console.error('Error al obtener mecánicos:', error);
-        return res.status(500).json({ message: 'Error al obtener mecánicos' });
+        console.error('Error detallado al obtener mecánicos:', error);
+        return res.status(500).json({ 
+            message: 'Error al obtener mecánicos',
+            error: error instanceof Error ? error.message : 'Error desconocido'
+        });
     }
 });
 
