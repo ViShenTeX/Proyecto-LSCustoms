@@ -63,12 +63,11 @@ export class VehicleManager {
     });
   }
 
-  private async loadVehicles(): Promise<void> {
+  public async loadVehicles(): Promise<void> {
     try {
       const token = localStorage.getItem('mechanicToken');
       if (!token) {
-        window.location.href = '/';
-        return;
+        throw new Error('No authentication token found');
       }
 
       const response = await fetch('/api/vehiculos', {
@@ -76,18 +75,16 @@ export class VehicleManager {
           'Authorization': `Bearer ${token}`
         }
       });
-      
-      if (response.status === 401) {
-        // Token expired or invalid
-        localStorage.removeItem('mechanicToken');
-        window.location.href = '/';
-        return;
+
+      if (!response.ok) {
+        throw new Error('Failed to load vehicles');
       }
 
       const vehicles = await response.json();
       this.renderVehicles(vehicles);
     } catch (error) {
       console.error('Error loading vehicles:', error);
+      this.showError('Error al cargar los vehículos');
     }
   }
 
@@ -242,5 +239,10 @@ export class VehicleManager {
     localStorage.removeItem('mechanicToken');
     // Redirect to home page
     window.location.href = '/';
+  }
+
+  private showError(message: string): void {
+    // Implement the logic to show an error message to the user
+    alert(message);
   }
 } 

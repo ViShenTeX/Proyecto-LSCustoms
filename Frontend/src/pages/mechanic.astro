@@ -245,7 +245,8 @@ import '../styles/global.css';
 
       // Inicializar el gestor de vehículos
       console.log('Inicializando gestor de vehículos...');
-      VehicleManager.getInstance();
+      const vehicleManager = VehicleManager.getInstance();
+      await vehicleManager.loadVehicles();
     } catch (error) {
       console.error('Error verificando autenticación:', error);
       localStorage.removeItem('mechanicToken');
