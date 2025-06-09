@@ -21,12 +21,17 @@ router.get('/verify', async (req, res) => {
             return res.status(401).json({ message: 'Invalid token' });
         }
 
-        return res.json({ valid: true, mechanic: {
-            id: mechanic.id,
-            nombre: mechanic.nombre,
-            rut: mechanic.rut,
-            rol: mechanic.rol
-        }});
+        console.log('Mechanic found:', mechanic); // Debug log
+
+        return res.json({ 
+            valid: true, 
+            mechanic: {
+                id: mechanic.id,
+                nombre: mechanic.nombre,
+                rut: mechanic.rut,
+                rol: mechanic.rol || 'mecanico' // Ensure rol is never undefined
+            }
+        });
     } catch (error) {
         console.error('Token verification error:', error);
         return res.status(401).json({ message: 'Invalid token' });
