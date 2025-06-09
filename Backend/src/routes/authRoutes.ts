@@ -27,7 +27,7 @@ router.get('/verify', async (req, res) => {
             valid: true, 
             mechanic: {
                 id: mechanic.id,
-                nombre: mechanic.nombre,
+                name: mechanic.name,
                 rut: mechanic.rut,
                 role: mechanic.role
             }
@@ -73,7 +73,7 @@ router.post('/login', async (req, res) => {
             token,
             mechanic: {
                 id: mechanic.id,
-                nombre: mechanic.nombre,
+                name: mechanic.name,
                 rut: mechanic.rut,
                 role: mechanic.role
             }

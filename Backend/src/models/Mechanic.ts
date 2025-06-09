@@ -10,7 +10,7 @@ export class Mechanic {
     id: number;
 
     @Column()
-    nombre: string;
+    name: string;
 
     @Column({ unique: true })
     rut: string;
@@ -27,9 +27,9 @@ export class Mechanic {
     @UpdateDateColumn()
     updatedAt: Date;
 
-    constructor(id: number, nombre: string, rut: string, pin: string, role: string) {
+    constructor(id: number, name: string, rut: string, pin: string, role: string) {
         this.id = id;
-        this.nombre = nombre;
+        this.name = name;
         this.rut = rut;
         this.pin = pin;
         this.role = role;
@@ -69,7 +69,7 @@ export class Mechanic {
 
             return new Mechanic(
                 mechanicData.id,
-                mechanicData.nombre,
+                mechanicData.name,
                 mechanicData.rut,
                 mechanicData.pin,
                 mechanicData.role
@@ -95,7 +95,7 @@ export class Mechanic {
         const mechanicData = rows[0];
         const mechanic = new Mechanic(
             mechanicData.id,
-            mechanicData.nombre,
+            mechanicData.name,
             mechanicData.rut,
             mechanicData.pin,
             mechanicData.role

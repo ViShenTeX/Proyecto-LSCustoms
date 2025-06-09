@@ -14,7 +14,7 @@ router.get('/', async (_req, res) => {
         console.log('Intentando obtener lista de mecánicos...');
         
         const [mechanics] = await db.execute(`
-            SELECT id, nombre, rut, role 
+            SELECT id, name, rut, role 
             FROM mechanics
         `);
         
@@ -32,7 +32,7 @@ router.get('/', async (_req, res) => {
 // Crear nuevo mecánico
 router.post('/', async (req, res) => {
     try {
-        const { nombre, rut, pin, role } = req.body;
+        const { name, rut, pin, role } = req.body;
 
         // Verificar si ya existe un mecánico con el mismo RUT
         const [existingMechanics]: any = await db.execute(
@@ -49,8 +49,8 @@ router.post('/', async (req, res) => {
 
         // Crear nuevo mecánico
         const [result]: any = await db.execute(
-            'INSERT INTO mechanics (nombre, rut, pin, role, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())',
-            [nombre, rut, hashedPin, role || 'mecanico']
+            'INSERT INTO mechanics (name, rut, pin, role, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())',
+            [name, rut, hashedPin, role || 'mecanico']
         );
 
         return res.status(201).json({

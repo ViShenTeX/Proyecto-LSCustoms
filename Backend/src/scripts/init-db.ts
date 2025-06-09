@@ -7,7 +7,7 @@ async function initDatabase() {
     await db.execute(`
       CREATE TABLE IF NOT EXISTS mechanics (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        nombre VARCHAR(100) NOT NULL,
+        name VARCHAR(100) NOT NULL,
         rut VARCHAR(20) NOT NULL UNIQUE,
         pin VARCHAR(255) NOT NULL,
         role ENUM('mecanico', 'admin') DEFAULT 'mecanico',
@@ -50,7 +50,7 @@ async function initDatabase() {
     // Crear usuario admin por defecto
     const adminPin = await bcrypt.hash('1234', 10);
     await db.execute(`
-        INSERT INTO mechanics (nombre, rut, pin, role, created_at, updated_at)
+        INSERT INTO mechanics (name, rut, pin, role, created_at, updated_at)
         VALUES ('Admin', '21.430.534-8', ?, 'admin', NOW(), NOW())
         ON DUPLICATE KEY UPDATE role = 'admin'
     `, [adminPin]);
