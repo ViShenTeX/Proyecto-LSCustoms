@@ -6,7 +6,10 @@ import bcrypt from 'bcrypt';
 export const login = async (req: Request, res: Response): Promise<Response | void> => {
     try {
         const { rut, pin } = req.body;
+        console.log('Intento de login para RUT:', rut);
+        
         const mechanic = await Mechanic.findByRut(rut);
+        console.log('Mecánico encontrado:', mechanic);
 
         if (!mechanic) {
             return res.status(401).json({ message: 'Credenciales inválidas' });
@@ -27,7 +30,7 @@ export const login = async (req: Request, res: Response): Promise<Response | voi
             { expiresIn: '8h' }
         );
 
-        return res.json({
+        const response = {
             token,
             mechanic: {
                 id: mechanic.id,
@@ -35,7 +38,9 @@ export const login = async (req: Request, res: Response): Promise<Response | voi
                 rut: mechanic.rut,
                 role: mechanic.role
             }
-        });
+        };
+        console.log('Respuesta de login:', response);
+        return res.json(response);
     } catch (error) {
         console.error('Error en login:', error);
         return res.status(500).json({ message: 'Error en el servidor' });
@@ -56,7 +61,7 @@ export const register = async (req: Request, res: Response): Promise<Response | 
             name,
             rut,
             pin: hashedPin,
-            role: role || 'mecanico'
+            role: role || 'mechanic'
         });
 
         return res.status(201).json({
