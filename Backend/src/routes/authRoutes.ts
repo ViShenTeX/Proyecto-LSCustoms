@@ -29,7 +29,7 @@ router.get('/verify', async (req, res) => {
                 id: mechanic.id,
                 nombre: mechanic.nombre,
                 rut: mechanic.rut,
-                rol: mechanic.rol || 'mecanico' // Ensure rol is never undefined
+                role: mechanic.role
             }
         });
     } catch (error) {
@@ -56,14 +56,14 @@ router.post('/login', async (req, res) => {
         console.log('Login successful for mechanic:', {
             id: mechanic.id,
             rut: mechanic.rut,
-            rol: mechanic.rol
+            role: mechanic.role
         });
 
         const token = jwt.sign(
             { 
                 id: mechanic.id,
                 rut: mechanic.rut,
-                rol: mechanic.rol
+                role: mechanic.role
             },
             process.env.JWT_SECRET || 'your-secret-key',
             { expiresIn: '24h' }
@@ -75,7 +75,7 @@ router.post('/login', async (req, res) => {
                 id: mechanic.id,
                 nombre: mechanic.nombre,
                 rut: mechanic.rut,
-                rol: mechanic.rol
+                role: mechanic.role
             }
         });
     } catch (error) {

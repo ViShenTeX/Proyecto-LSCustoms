@@ -19,7 +19,7 @@ export class Mechanic {
     pin: string;
 
     @Column({ default: 'mecanico' })
-    rol: string;
+    role: string;
 
     @CreateDateColumn()
     createdAt: Date;
@@ -27,12 +27,12 @@ export class Mechanic {
     @UpdateDateColumn()
     updatedAt: Date;
 
-    constructor(id: number, nombre: string, rut: string, pin: string, rol: string) {
+    constructor(id: number, nombre: string, rut: string, pin: string, role: string) {
         this.id = id;
         this.nombre = nombre;
         this.rut = rut;
         this.pin = pin;
-        this.rol = rol;
+        this.role = role;
         this.createdAt = new Date();
         this.updatedAt = new Date();
     }
@@ -72,7 +72,7 @@ export class Mechanic {
                 mechanicData.nombre,
                 mechanicData.rut,
                 mechanicData.pin,
-                mechanicData.rol
+                mechanicData.role
             );
         } catch (error) {
             console.error('Error finding mechanic by RUT:', error);
@@ -80,11 +80,11 @@ export class Mechanic {
         }
     }
 
-    static async create(data: { rut: string, pin: string, nombre: string, rol: MechanicRole }): Promise<number> {
+    static async create(data: { rut: string, pin: string, nombre: string, role: MechanicRole }): Promise<number> {
         const hashedPin = await bcrypt.hash(data.pin, 10);
         const [result]: any = await db.execute(
-            'INSERT INTO mechanics (rut, pin, nombre, rol) VALUES (?, ?, ?, ?)',
-            [data.rut, hashedPin, data.nombre, data.rol]
+            'INSERT INTO mechanics (rut, pin, nombre, role) VALUES (?, ?, ?, ?)',
+            [data.rut, hashedPin, data.nombre, data.role]
         );
         return result.insertId;
     }
@@ -98,7 +98,7 @@ export class Mechanic {
             mechanicData.nombre,
             mechanicData.rut,
             mechanicData.pin,
-            mechanicData.rol
+            mechanicData.role
         );
         mechanic.createdAt = new Date(mechanicData.created_at);
         mechanic.updatedAt = new Date(mechanicData.updated_at);

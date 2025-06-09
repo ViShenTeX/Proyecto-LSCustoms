@@ -67,7 +67,7 @@ async function initDatabase() {
     // Actualizar rol del admin existente
     await db.execute(`
         UPDATE mechanics 
-        SET rol = 'admin' 
+        SET role = 'admin' 
         WHERE rut = '21.430.534-8'
     `);
     console.log('Rol de admin actualizado');
