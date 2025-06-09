@@ -36,15 +36,12 @@ export class Mechanic {
     @UpdateDateColumn()
     updatedAt: Date;
 
-    // Este método ya no necesita @BeforeInsert si no usamos TypeORM para la creación
-    // Pero lo mantendremos para la lógica de hash de contraseña si se usa de otra manera
-    async hashPassword(password: string): Promise<string> {
-        return bcrypt.hash(password, 10);
+    async validatePassword(password: string): Promise<boolean> {
+        return bcrypt.compare(password, this.password);
     }
 
-    async validatePassword(password: string): Promise<boolean> {
-        // Asumimos que `this.password` ya está hasheado
-        return bcrypt.compare(password, this.password);
+    static async hashPassword(password: string): Promise<string> {
+        return bcrypt.hash(password, 10);
     }
 
     static async findByRut(rut: string): Promise<Mechanic | null> {

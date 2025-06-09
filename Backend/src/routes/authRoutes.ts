@@ -82,17 +82,19 @@ router.post('/register', authMiddleware, async (req: Request, res: Response): Pr
             return;
         }
 
+        const hashedPassword = await Mechanic.hashPassword(password);
         const mechanic = mechanicRepository.create({
             nombre,
             apellido,
             rut,
-            password,
+            password: hashedPassword,
             especialidad
         });
 
         await mechanicRepository.save(mechanic);
         res.status(201).json({ message: 'Mechanic registered successfully' });
     } catch (error) {
+        console.error('Error registering mechanic:', error);
         res.status(500).json({ message: 'Error registering mechanic' });
         return;
     }
