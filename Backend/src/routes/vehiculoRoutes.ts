@@ -74,7 +74,7 @@ router.post('/', upload.single('imagen'), async (req, res) => {
         }
 
         // Iniciar transacción
-        await db.beginTransaction();
+        await db.execute('START TRANSACTION');
 
         try {
             // Primero verificar si el cliente existe
@@ -109,7 +109,7 @@ router.post('/', upload.single('imagen'), async (req, res) => {
             );
 
             // Confirmar transacción
-            await db.commit();
+            await db.execute('COMMIT');
             console.log('Transacción completada exitosamente');
 
             return res.status(201).json({
@@ -125,7 +125,7 @@ router.post('/', upload.single('imagen'), async (req, res) => {
         } catch (error) {
             // Si hay error, revertir transacción
             console.error('Error en la transacción:', error);
-            await db.rollback();
+            await db.execute('ROLLBACK');
             throw error;
         }
     } catch (error) {
