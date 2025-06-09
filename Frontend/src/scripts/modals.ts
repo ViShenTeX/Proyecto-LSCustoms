@@ -5,6 +5,36 @@ interface FormDataValues {
   patente?: string;
 }
 
+// Función para formatear RUT
+function formatRut(rut: string): string {
+  // Eliminar puntos y guión
+  let rutLimpio = rut.replace(/[^0-9kK]/g, '');
+  
+  // Si está vacío, retornar vacío
+  if (rutLimpio.length === 0) return '';
+  
+  // Separar el dígito verificador
+  let dv = rutLimpio.slice(-1).toUpperCase();
+  let rutNumerico = rutLimpio.slice(0, -1);
+  
+  // Formatear con puntos según la longitud
+  let rutFormateado = '';
+  if (rutNumerico.length <= 7) {
+    // Formato para RUTs de 8 dígitos (X.XXX.XXX-X)
+    for (let i = rutNumerico.length; i > 0; i -= 3) {
+      rutFormateado = '.' + rutNumerico.slice(Math.max(0, i - 3), i) + rutFormateado;
+    }
+  } else {
+    // Formato para RUTs de 9 dígitos (XX.XXX.XXX-X)
+    rutFormateado = rutNumerico.slice(0, 2) + '.' + 
+                    rutNumerico.slice(2, 5) + '.' + 
+                    rutNumerico.slice(5);
+  }
+  
+  // Eliminar el punto inicial y agregar el guión con el dígito verificador
+  return rutFormateado + '-' + dv;
+}
+
 // Clase para manejar los modales
 export class ModalManager {
   private static instance: ModalManager;
@@ -20,6 +50,7 @@ export class ModalManager {
     this.vehicleForm = document.getElementById('vehicleForm') as HTMLFormElement;
 
     this.initializeEventListeners();
+    this.initializeRutFormatting();
   }
 
   public static getInstance(): ModalManager {
@@ -65,6 +96,25 @@ export class ModalManager {
     });
   }
 
+  private initializeRutFormatting(): void {
+    const rutInputs = document.querySelectorAll('input[name="rut"]');
+    rutInputs.forEach(input => {
+      // Formatear mientras se escribe
+      input.addEventListener('input', (e) => {
+        const target = e.target as HTMLInputElement;
+        target.value = formatRut(target.value);
+      });
+
+      // Asegurar formato correcto antes de enviar
+      input.addEventListener('blur', (e) => {
+        const target = e.target as HTMLInputElement;
+        if (target.value) {
+          target.value = formatRut(target.value);
+        }
+      });
+    });
+  }
+
   private openModal(modalId: string): void {
     const modal = document.getElementById(modalId);
     const modalContent = modal?.querySelector('[id$="ModalContent"]') as HTMLElement;
@@ -101,8 +151,13 @@ export class ModalManager {
     if (!this.mechanicForm) return;
 
     const formData = new FormData(this.mechanicForm);
+    const rut = formData.get('rut') as string;
+    
+    // Asegurar que el RUT esté en el formato correcto antes de enviar
+    const rutFormateado = formatRut(rut);
+    
     const loginData = {
-      rut: formData.get('rut'),
+      rut: rutFormateado,
       pin: formData.get('pin')
     };
 
