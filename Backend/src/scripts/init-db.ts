@@ -1,5 +1,5 @@
 import db from '../config/database';
-import { Mechanic } from '../models/Mechanic';
+import bcrypt from 'bcryptjs';
 
 async function initDatabase() {
   try {
@@ -47,19 +47,19 @@ async function initDatabase() {
 
     console.log('Tablas creadas exitosamente');
 
-    // Crear administrador inicial si no existe
-    const adminRut = '21.430.534-8';
-    const existingAdmin = await Mechanic.findByRut(adminRut);
+    // Verificar si el administrador ya existe
+    const [existingAdmin] = await db.execute(
+      'SELECT * FROM mechanics WHERE rut = ?',
+      ['21.430.534-8']
+    );
 
-    if (!existingAdmin) {
-      const adminData = {
-        rut: adminRut,
-        pin: '103003',
-        name: 'Vichicho',
-        role: 'admin' as const
-      };
-
-      await Mechanic.create(adminData);
+    if (!existingAdmin || (Array.isArray(existingAdmin) && existingAdmin.length === 0)) {
+      // Crear el administrador
+      const hashedPin = await bcrypt.hash('103003', 10);
+      await db.execute(
+        'INSERT INTO mechanics (rut, pin, name, role) VALUES (?, ?, ?, ?)',
+        ['21.430.534-8', hashedPin, 'Vichicho', 'admin']
+      );
       console.log('Administrador inicial creado exitosamente');
     } else {
       console.log('El administrador inicial ya existe');
