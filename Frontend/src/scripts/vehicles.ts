@@ -104,13 +104,13 @@ export class VehicleManager {
     this.vehicleList.innerHTML = vehicles.map(vehicle => `
       <tr>
         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${vehicle.patente}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${vehicle.cliente.nombre}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${vehicle.cliente_nombre || 'N/A'}</td>
         <td class="px-6 py-4 whitespace-nowrap">
           <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-${this.getStatusColor(vehicle.estado)}-100 text-${this.getStatusColor(vehicle.estado)}-800">
             ${vehicle.estado}
           </span>
         </td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(vehicle.fecha_ingreso).toLocaleDateString()}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(vehicle.created_at).toLocaleDateString()}</td>
         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
           <button class="text-indigo-600 hover:text-indigo-900 mr-3" onclick="editVehicle('${vehicle.id}')">Editar</button>
           <button class="text-red-600 hover:text-red-900" onclick="deleteVehicle('${vehicle.id}')">Eliminar</button>
