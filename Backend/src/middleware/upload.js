@@ -2,16 +2,16 @@ const multer = require('multer');
 const path = require('path');
 
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
+    destination: function (_req, _file, cb) {
         cb(null, 'uploads/');
     },
-    filename: function (req, file, cb) {
+    filename: function (_req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
     }
 });
 
-const fileFilter = (req, file, cb) => {
+const fileFilter = (_req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
         cb(null, true);
     } else {

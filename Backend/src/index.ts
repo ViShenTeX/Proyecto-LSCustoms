@@ -1,9 +1,15 @@
+import "reflect-metadata";
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import dotenv from 'dotenv';
-import mechanicsRouter from './routes/mechanics';
+import { AppDataSource } from './config/data-source';
+import mechanicRoutes from './routes/mechanicRoutes';
+import clienteRoutes from './routes/clienteRoutes';
+import vehiculoRoutes from './routes/vehiculoRoutes';
+import authRoutes from './routes/authRoutes';
 
+// Configuración de variables de entorno
 dotenv.config();
 
 const app = express();
@@ -23,15 +29,31 @@ if (!require('fs').existsSync(uploadsDir)) {
   require('fs').mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Routes
-app.use('/api/mechanics', mechanicsRouter);
+// Rutas
+app.use('/api/mechanics', mechanicRoutes);
+app.use('/api/clientes', clienteRoutes);
+app.use('/api/vehiculos', vehiculoRoutes);
+app.use('/api/auth', authRoutes);
 
-// Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something broke!' });
+// Ruta de prueba
+app.get('/api/health', (_req: express.Request, res: express.Response) => {
+  res.json({ status: 'ok', message: 'Servidor funcionando correctamente' });
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-}); 
+// Manejo de errores
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Error interno del servidor' });
+});
+
+// Inicializar la conexión a la base de datos y el servidor
+AppDataSource.initialize()
+  .then(() => {
+    console.log("Conexión a la base de datos establecida");
+    app.listen(port, () => {
+      console.log(`Servidor corriendo en el puerto ${port}`);
+    });
+  })
+  .catch((error: any) => {
+    console.error("Error al conectar con la base de datos:", error);
+  }); 
