@@ -12,8 +12,8 @@ router.use(authMiddleware);
 router.get('/', async (_req, res) => {
     try {
         const [mecanicos] = await db.execute(`
-            SELECT id, rut, nombre, email, rol, created_at, updated_at 
-            FROM mecanicos
+            SELECT id, rut, nombre, rol, created_at, updated_at 
+            FROM mechanics
             ORDER BY nombre ASC
         `);
         return res.json(mecanicos);
@@ -31,11 +31,11 @@ router.post('/', async (req, res) => {
             return res.status(403).json({ message: 'No tienes permisos para crear mecánicos' });
         }
 
-        const { rut, nombre, email, password, rol } = req.body;
+        const { rut, nombre, pin, rol } = req.body;
 
         // Verificar si ya existe un mecánico con ese RUT
         const [existing] = await db.execute(
-            'SELECT id FROM mecanicos WHERE rut = ?',
+            'SELECT id FROM mechanics WHERE rut = ?',
             [rut]
         );
 
@@ -43,21 +43,20 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ message: 'Ya existe un mecánico con ese RUT' });
         }
 
-        // Hash de la contraseña
-        const hashedPassword = await bcrypt.hash(password, 10);
+        // Hash del PIN
+        const hashedPin = await bcrypt.hash(pin, 10);
 
         // Insertar nuevo mecánico
         const [result] = await db.execute(
-            `INSERT INTO mecanicos (rut, nombre, email, password, rol, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, NOW(), NOW())`,
-            [rut, nombre, email, hashedPassword, rol || 'mecanico']
+            `INSERT INTO mechanics (rut, nombre, pin, rol, created_at, updated_at)
+             VALUES (?, ?, ?, ?, NOW(), NOW())`,
+            [rut, nombre, hashedPin, rol || 'mecanico']
         );
 
         return res.status(201).json({
             id: (result as any).insertId,
             rut,
             nombre,
-            email,
             rol: rol || 'mecanico'
         });
     } catch (error) {
@@ -80,7 +79,7 @@ router.delete('/:id', async (req, res) => {
         }
 
         const [result] = await db.execute(
-            'DELETE FROM mecanicos WHERE id = ?',
+            'DELETE FROM mechanics WHERE id = ?',
             [req.params.id]
         );
 

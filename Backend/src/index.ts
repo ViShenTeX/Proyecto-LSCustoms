@@ -5,7 +5,6 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { AppDataSource } from './config/data-source';
 import mechanicRoutes from './routes/mechanicRoutes';
-import clienteRoutes from './routes/clienteRoutes';
 import vehiculoRoutes from './routes/vehiculoRoutes';
 import authRoutes from './routes/authRoutes';
 
@@ -30,8 +29,6 @@ if (!require('fs').existsSync(uploadsDir)) {
 }
 
 // Rutas
-app.use('/api/mechanics', mechanicRoutes);
-app.use('/api/clientes', clienteRoutes);
 app.use('/api/vehiculos', vehiculoRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/mecanicos', mechanicRoutes);
