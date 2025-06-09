@@ -87,7 +87,7 @@ export class ModalManager {
     // Form Submissions
     this.mechanicForm?.addEventListener('submit', (e) => {
       e.preventDefault();
-      this.handleMechanicLogin();
+      this.handleMechanicLogin(e);
     });
 
     this.vehicleForm?.addEventListener('submit', (e) => {
@@ -147,42 +147,37 @@ export class ModalManager {
     }, 150);
   }
 
-  private async handleMechanicLogin(): Promise<void> {
-    if (!this.mechanicForm) return;
+  private async handleMechanicLogin(event: Event): Promise<void> {
+    event.preventDefault();
+    const form = event.target as HTMLFormElement;
+    const rut = form.querySelector<HTMLInputElement>('#mechanic-rut')?.value;
+    const pin = form.querySelector<HTMLInputElement>('#mechanic-pin')?.value;
 
-    const formData = new FormData(this.mechanicForm);
-    const rut = formData.get('rut') as string;
-    
-    // Asegurar que el RUT esté en el formato correcto antes de enviar
-    const rutFormateado = formatRut(rut);
-    
-    const loginData = {
-      rut: rutFormateado,
-      password: formData.get('pin')
-    };
+    if (!rut || !pin) {
+      this.showError('Por favor complete todos los campos');
+      return;
+    }
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('http://3.83.95.128/api/auth/login', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(loginData)
+        body: JSON.stringify({ rut, pin }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        // Store the token
-        localStorage.setItem('mechanicToken', data.token);
-        // Redirect to mechanic dashboard
-        window.location.href = '/mechanic';
-      } else {
+      if (!response.ok) {
         throw new Error('Invalid credentials');
       }
+
+      const data = await response.json();
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.mechanic));
+      window.location.href = '/mechanic';
     } catch (error) {
       console.error('Login error:', error);
-      // Show error message to user
-      alert('Error al iniciar sesión. Por favor, verifique sus credenciales.');
+      this.showError('Error al iniciar sesión. Por favor intente nuevamente.');
     }
   }
 
@@ -254,5 +249,11 @@ export class ModalManager {
     `;
 
     document.body.appendChild(statusModal);
+  }
+
+  private showError(message: string): void {
+    // Implement the logic to show an error message to the user
+    console.error(message);
+    alert(message);
   }
 } 

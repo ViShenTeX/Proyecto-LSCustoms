@@ -24,11 +24,11 @@ export class Mechanic {
     @Column()
     especialidad: string;
 
-    @Column({ type: 'enum', enum: ['mecanico', 'admin'], default: 'mecanico' })
-    rol: MechanicRole;
-
     @Column({ default: true })
     activo: boolean;
+
+    @Column({ default: 'mecanico' })
+    rol: string;
 
     @CreateDateColumn()
     createdAt: Date;
@@ -48,16 +48,15 @@ export class Mechanic {
         const [rows]: any = await db.execute('SELECT * FROM mechanics WHERE rut = ?', [rut]);
         if (rows.length === 0) return null;
         const mechanicData = rows[0];
-        // Mapear los datos de la fila a una instancia de Mechanic
         const mechanic = new Mechanic();
         mechanic.id = mechanicData.id;
-        mechanic.nombre = mechanicData.name; // 'name' en la BD, 'nombre' en el modelo
-        mechanic.apellido = mechanicData.apellido || ''; // Asumiendo que apellido puede no existir
+        mechanic.nombre = mechanicData.name;
+        mechanic.apellido = mechanicData.apellido || '';
         mechanic.rut = mechanicData.rut;
-        mechanic.password = mechanicData.pin; // 'pin' en la BD, 'password' en el modelo
-        mechanic.especialidad = mechanicData.especialidad || ''; // Asumiendo que especialidad puede no existir
-        mechanic.rol = mechanicData.role; // 'role' en la BD, 'rol' en el modelo
-        mechanic.activo = mechanicData.active; // 'active' en la BD, 'activo' en el modelo
+        mechanic.password = mechanicData.pin;
+        mechanic.especialidad = mechanicData.especialidad || '';
+        mechanic.rol = mechanicData.role;
+        mechanic.activo = mechanicData.active;
         mechanic.createdAt = new Date(mechanicData.created_at);
         mechanic.updatedAt = new Date(mechanicData.updated_at);
         return mechanic;
