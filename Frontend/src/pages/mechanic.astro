@@ -201,10 +201,20 @@ import '../styles/global.css';
     // Check authentication
     const token = localStorage.getItem('mechanicToken');
     if (!token) {
-      window.location.href = '/';
+      window.location.replace('/');
       return;
     }
-    
+
+    // Configurar el botón de cerrar sesión
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        localStorage.removeItem('mechanicToken');
+        localStorage.removeItem('mechanicData');
+        window.location.replace('/');
+      });
+    }
+
     VehicleManager.getInstance();
   });
 </script> 

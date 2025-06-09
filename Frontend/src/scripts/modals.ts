@@ -172,9 +172,13 @@ export class ModalManager {
       }
 
       const data = await response.json();
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.mechanic));
-      window.location.href = '/mechanic';
+      if (data.token) {
+        localStorage.setItem('mechanicToken', data.token);
+        localStorage.setItem('mechanicData', JSON.stringify(data.mechanic));
+        window.location.replace('/mechanic');
+      } else {
+        throw new Error('No token received');
+      }
     } catch (error) {
       console.error('Login error:', error);
       this.showError('Error al iniciar sesión. Por favor intente nuevamente.');
