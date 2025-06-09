@@ -61,40 +61,73 @@ router.get('/:id', async (req, res) => {
 // Crear un nuevo vehículo
 router.post('/', upload.single('imagen'), async (req, res) => {
     try {
-        const { patente, marca, modelo, cliente_rut, estado, observaciones } = req.body;
+        console.log('Received vehicle data:', req.body);
+        const { patente, marca, modelo, cliente_rut, cliente_nombre, cliente_telefono, estado, observaciones } = req.body;
         const imagen = req.file ? `/uploads/vehicles/${req.file.filename}` : null;
 
-        // Primero obtener el ID del cliente usando el RUT
-        const [clientes] = await db.execute(
-            'SELECT id FROM clients WHERE rut = ?',
-            [cliente_rut]
-        );
-
-        if (!clientes || (Array.isArray(clientes) && clientes.length === 0)) {
-            return res.status(404).json({ message: 'Cliente no encontrado' });
+        if (!patente || !marca || !modelo || !cliente_rut || !cliente_nombre || !cliente_telefono || !estado) {
+            return res.status(400).json({ 
+                message: 'Faltan campos requeridos',
+                received: { patente, marca, modelo, cliente_rut, cliente_nombre, cliente_telefono, estado }
+            });
         }
 
-        const cliente_id = (clientes as any[])[0].id;
+        // Iniciar transacción
+        await db.beginTransaction();
 
-        const [result] = await db.execute(
-            `INSERT INTO vehiculos (patente, marca, modelo, cliente_id, estado, observaciones, imagen, created_at, updated_at) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-            [patente, marca, modelo, cliente_id, estado, observaciones, imagen]
-        );
+        try {
+            // Primero verificar si el cliente existe
+            const [clientes] = await db.execute(
+                'SELECT id FROM clientes WHERE rut = ?',
+                [cliente_rut]
+            );
 
-        return res.status(201).json({
-            id: (result as any).insertId,
-            patente,
-            marca,
-            modelo,
-            cliente_id,
-            estado,
-            observaciones,
-            imagen
-        });
+            let cliente_id;
+
+            if (!clientes || (Array.isArray(clientes) && clientes.length === 0)) {
+                // Si el cliente no existe, crearlo
+                const [result] = await db.execute(
+                    'INSERT INTO clientes (rut, nombre, telefono, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())',
+                    [cliente_rut, cliente_nombre, cliente_telefono]
+                );
+                cliente_id = (result as any).insertId;
+                console.log('Nuevo cliente creado con ID:', cliente_id);
+            } else {
+                cliente_id = (clientes as any[])[0].id;
+                console.log('Cliente existente encontrado con ID:', cliente_id);
+            }
+
+            // Crear el vehículo
+            const [result] = await db.execute(
+                `INSERT INTO vehiculos (patente, marca, modelo, cliente_id, estado, observaciones, imagen, created_at, updated_at) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+                [patente, marca, modelo, cliente_id, estado, observaciones, imagen]
+            );
+
+            // Confirmar transacción
+            await db.commit();
+
+            return res.status(201).json({
+                id: (result as any).insertId,
+                patente,
+                marca,
+                modelo,
+                cliente_id,
+                estado,
+                observaciones,
+                imagen
+            });
+        } catch (error) {
+            // Si hay error, revertir transacción
+            await db.rollback();
+            throw error;
+        }
     } catch (error) {
-        console.error('Error al crear vehículo:', error);
-        return res.status(500).json({ message: 'Error al crear vehículo' });
+        console.error('Error detallado al crear vehículo:', error);
+        return res.status(500).json({ 
+            message: 'Error al crear vehículo',
+            error: error instanceof Error ? error.message : 'Error desconocido'
+        });
     }
 });
 

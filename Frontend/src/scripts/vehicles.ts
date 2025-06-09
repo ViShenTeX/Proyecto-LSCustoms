@@ -198,7 +198,9 @@ export class VehicleManager {
       modelo: formData.get('modelo'),
       estado: formData.get('estado'),
       observaciones: formData.get('observaciones'),
-      cliente_rut: formData.get('rut')
+      cliente_rut: formData.get('rut'),
+      cliente_nombre: formData.get('nombre'),
+      cliente_telefono: formData.get('telefono')
     };
 
     try {
