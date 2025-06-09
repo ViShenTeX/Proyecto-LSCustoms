@@ -5,59 +5,50 @@ import bcrypt from 'bcrypt';
 
 const router = Router();
 
-// Apply auth middleware to all routes
+// Aplicar middleware de autenticación a todas las rutas
 router.use(authMiddleware);
 
 // Obtener todos los mecánicos
 router.get('/', async (_req, res) => {
     try {
-        const [mecanicos] = await db.execute(`
-            SELECT id, rut, nombre, rol, created_at, updated_at 
+        const [mechanics] = await db.execute(`
+            SELECT id, nombre, rut, role 
             FROM mechanics
-            ORDER BY nombre ASC
         `);
-        return res.json(mecanicos);
+        return res.json(mechanics);
     } catch (error) {
         console.error('Error al obtener mecánicos:', error);
         return res.status(500).json({ message: 'Error al obtener mecánicos' });
     }
 });
 
-// Crear un nuevo mecánico (solo admin)
+// Crear nuevo mecánico
 router.post('/', async (req, res) => {
     try {
-        // Verificar si el usuario es admin
-        if (req.mechanic?.rol !== 'admin') {
-            return res.status(403).json({ message: 'No tienes permisos para crear mecánicos' });
-        }
+        const { nombre, rut, pin, role } = req.body;
 
-        const { rut, nombre, pin, rol } = req.body;
-
-        // Verificar si ya existe un mecánico con ese RUT
-        const [existing] = await db.execute(
-            'SELECT id FROM mechanics WHERE rut = ?',
+        // Verificar si ya existe un mecánico con el mismo RUT
+        const [existingMechanics]: any = await db.execute(
+            'SELECT * FROM mechanics WHERE rut = ?',
             [rut]
         );
 
-        if (Array.isArray(existing) && existing.length > 0) {
-            return res.status(400).json({ message: 'Ya existe un mecánico con ese RUT' });
+        if (existingMechanics.length > 0) {
+            return res.status(400).json({ message: 'Ya existe un mecánico con este RUT' });
         }
 
         // Hash del PIN
         const hashedPin = await bcrypt.hash(pin, 10);
 
-        // Insertar nuevo mecánico
-        const [result] = await db.execute(
-            `INSERT INTO mechanics (rut, nombre, pin, rol, created_at, updated_at)
-             VALUES (?, ?, ?, ?, NOW(), NOW())`,
-            [rut, nombre, hashedPin, rol || 'mecanico']
+        // Crear nuevo mecánico
+        const [result]: any = await db.execute(
+            'INSERT INTO mechanics (nombre, rut, pin, role, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())',
+            [nombre, rut, hashedPin, role || 'mecanico']
         );
 
         return res.status(201).json({
-            id: (result as any).insertId,
-            rut,
-            nombre,
-            rol: rol || 'mecanico'
+            message: 'Mecánico registrado exitosamente',
+            mechanicId: result.insertId
         });
     } catch (error) {
         console.error('Error al crear mecánico:', error);
@@ -65,25 +56,15 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Eliminar un mecánico (solo admin)
+// Eliminar mecánico
 router.delete('/:id', async (req, res) => {
     try {
-        // Verificar si el usuario es admin
-        if (req.mechanic?.rol !== 'admin') {
-            return res.status(403).json({ message: 'No tienes permisos para eliminar mecánicos' });
-        }
-
-        // No permitir eliminar el propio usuario
-        if (req.mechanic.id === parseInt(req.params.id)) {
-            return res.status(400).json({ message: 'No puedes eliminar tu propia cuenta' });
-        }
-
-        const [result] = await db.execute(
+        const [result]: any = await db.execute(
             'DELETE FROM mechanics WHERE id = ?',
             [req.params.id]
         );
 
-        if ((result as any).affectedRows === 0) {
+        if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Mecánico no encontrado' });
         }
 

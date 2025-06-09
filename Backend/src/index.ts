@@ -29,8 +29,8 @@ if (!require('fs').existsSync(uploadsDir)) {
 }
 
 // Rutas
-app.use('/api/vehiculos', vehiculoRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/vehiculos', vehiculoRoutes);
 app.use('/api/mecanicos', mechanicRoutes);
 
 // Ruta de prueba
