@@ -60,6 +60,7 @@ router.get('/:id', async (req, res) => {
 
 // Crear un nuevo vehículo
 router.post('/', upload.single('imagen'), async (req, res) => {
+    let connection;
     try {
         console.log('Received vehicle data:', req.body);
         const { patente, marca, modelo, cliente_rut, cliente_nombre, cliente_telefono, estado, observaciones } = req.body;
@@ -73,13 +74,14 @@ router.post('/', upload.single('imagen'), async (req, res) => {
             });
         }
 
-        // Iniciar transacción
-        await db.execute('START TRANSACTION');
+        // Obtener una conexión del pool
+        connection = await db.getConnection();
+        await connection.beginTransaction();
 
         try {
             // Primero verificar si el cliente existe
             console.log('Buscando cliente con RUT:', cliente_rut);
-            const [clientes] = await db.execute(
+            const [clientes] = await connection.execute(
                 'SELECT id FROM clientes WHERE rut = ?',
                 [cliente_rut]
             );
@@ -89,7 +91,7 @@ router.post('/', upload.single('imagen'), async (req, res) => {
             if (!clientes || (Array.isArray(clientes) && clientes.length === 0)) {
                 // Si el cliente no existe, crearlo
                 console.log('Creando nuevo cliente:', { rut: cliente_rut, nombre: cliente_nombre, telefono: cliente_telefono });
-                const [result] = await db.execute(
+                const [result] = await connection.execute(
                     'INSERT INTO clientes (rut, nombre, telefono, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())',
                     [cliente_rut, cliente_nombre, cliente_telefono]
                 );
@@ -102,14 +104,14 @@ router.post('/', upload.single('imagen'), async (req, res) => {
 
             // Crear el vehículo
             console.log('Creando vehículo con datos:', { patente, marca, modelo, cliente_id, estado, observaciones });
-            const [result] = await db.execute(
+            const [result] = await connection.execute(
                 `INSERT INTO vehiculos (patente, marca, modelo, cliente_id, estado, observaciones, imagen, created_at, updated_at) 
                  VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
                 [patente, marca, modelo, cliente_id, estado, observaciones, imagen]
             );
 
             // Confirmar transacción
-            await db.execute('COMMIT');
+            await connection.commit();
             console.log('Transacción completada exitosamente');
 
             return res.status(201).json({
@@ -125,7 +127,9 @@ router.post('/', upload.single('imagen'), async (req, res) => {
         } catch (error) {
             // Si hay error, revertir transacción
             console.error('Error en la transacción:', error);
-            await db.execute('ROLLBACK');
+            if (connection) {
+                await connection.rollback();
+            }
             throw error;
         }
     } catch (error) {
@@ -135,6 +139,11 @@ router.post('/', upload.single('imagen'), async (req, res) => {
             error: error instanceof Error ? error.message : 'Error desconocido',
             details: error instanceof Error ? error.stack : undefined
         });
+    } finally {
+        // Liberar la conexión
+        if (connection) {
+            connection.release();
+        }
     }
 });
 
