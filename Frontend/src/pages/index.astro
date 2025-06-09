@@ -247,6 +247,15 @@ import '../styles/global.css';
   document.addEventListener('DOMContentLoaded', () => {
     ModalManager.getInstance();
     CarouselManager.getInstance();
+
+    // Manejar el clic del botón de Estado de Vehículo para hacer scroll al formulario
+    const vehicleStatusBtn = document.getElementById('vehicleStatusBtn');
+    vehicleStatusBtn?.addEventListener('click', () => {
+      const statusForm = document.getElementById('statusForm');
+      if (statusForm) {
+        statusForm.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
   });
 
   // Función para formatear RUT
