@@ -150,33 +150,45 @@ router.post('/', upload.single('imagen'), async (req, res) => {
 // Actualizar un vehículo
 router.put('/:id', upload.single('imagen'), async (req, res) => {
     try {
-        const { patente, marca, modelo, cliente_id, estado, observaciones } = req.body;
-        const imagen = req.file ? `/uploads/vehicles/${req.file.filename}` : req.body.imagen;
+        const { estado, observaciones } = req.body;
+        const imagen = req.file ? `/uploads/vehicles/${req.file.filename}` : undefined;
+
+        // Construir la consulta SQL dinámicamente
+        let updateFields = ['estado = ?', 'observaciones = ?', 'updated_at = NOW()'];
+        let params = [estado, observaciones];
+
+        if (imagen) {
+            updateFields.push('imagen = ?');
+            params.push(imagen);
+        }
 
         const [result] = await db.execute(
             `UPDATE vehiculos 
-             SET patente = ?, marca = ?, modelo = ?, cliente_id = ?, estado = ?, observaciones = ?, imagen = ?, updated_at = NOW()
+             SET ${updateFields.join(', ')}
              WHERE id = ?`,
-            [patente, marca, modelo, cliente_id, estado, observaciones, imagen, req.params.id]
+            [...params, req.params.id]
         );
 
         if ((result as any).affectedRows === 0) {
             return res.status(404).json({ message: 'Vehículo no encontrado' });
         }
 
-        return res.json({
-            id: parseInt(req.params.id),
-            patente,
-            marca,
-            modelo,
-            cliente_id,
-            estado,
-            observaciones,
-            imagen
-        });
+        // Obtener el vehículo actualizado
+        const [vehiculos] = await db.execute(
+            `SELECT v.*, c.nombre as cliente_nombre 
+             FROM vehiculos v 
+             LEFT JOIN clientes c ON v.cliente_id = c.id 
+             WHERE v.id = ?`,
+            [req.params.id]
+        );
+
+        return res.json(Array.isArray(vehiculos) ? vehiculos[0] : vehiculos);
     } catch (error) {
         console.error('Error al actualizar vehículo:', error);
-        return res.status(500).json({ message: 'Error al actualizar vehículo' });
+        return res.status(500).json({ 
+            message: 'Error al actualizar vehículo',
+            error: error instanceof Error ? error.message : 'Error desconocido'
+        });
     }
 });
 

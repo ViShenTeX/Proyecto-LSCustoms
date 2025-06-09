@@ -271,67 +271,69 @@ import '../styles/global.css';
     </div>
 
     <!-- Modal para editar vehículo -->
-    <div id="editVehicleModal" class="modal modal-hidden">
-      <div id="editVehicleModalContent" class="modal-content">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-semibold">Editar Vehículo</h2>
-          <button data-modal-close="editVehicleModal" class="text-gray-500 hover:text-gray-700">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <form id="editVehicleForm" class="space-y-4">
-          <div id="vehicle-info" class="bg-gray-50 p-4 rounded-lg">
-            <!-- La información del vehículo se cargará dinámicamente -->
+    <div id="editVehicleModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 modal-hidden">
+      <div id="editVehicleModalContent" class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 transform transition-all duration-300 scale-95 opacity-0">
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold">Editar Vehículo</h2>
+            <button data-modal-close="editVehicleModal" class="text-gray-500 hover:text-gray-700">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
 
-          <div>
-            <label for="edit-estado" class="block text-sm font-medium text-gray-700">Estado</label>
-            <select id="edit-estado" name="estado" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-              <option value="En espera">En espera</option>
-              <option value="En revisión">En revisión</option>
-              <option value="En reparación">En reparación</option>
-              <option value="Listo para entrega">Listo para entrega</option>
-              <option value="Entregado">Entregado</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="edit-observaciones" class="block text-sm font-medium text-gray-700">Observaciones</label>
-            <textarea id="edit-observaciones" name="observaciones" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Fotos</label>
-            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-              <div class="space-y-1 text-center">
-                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                <div class="flex text-sm text-gray-600">
-                  <label for="edit-file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
-                    <span>Subir fotos</span>
-                    <input id="edit-file-upload" name="file-upload" type="file" class="sr-only" multiple accept="image/*">
-                  </label>
-                  <p class="pl-1">o arrastrar y soltar</p>
-                </div>
-                <p class="text-xs text-gray-500">PNG, JPG, GIF hasta 10MB</p>
-              </div>
+          <form id="editVehicleForm" class="space-y-4">
+            <div id="vehicle-info" class="bg-gray-50 p-4 rounded-lg">
+              <!-- La información del vehículo se cargará dinámicamente -->
             </div>
-            <div id="editImagePreview" class="mt-4 grid grid-cols-2 gap-4"></div>
-          </div>
 
-          <div class="flex justify-end space-x-3">
-            <button type="button" data-modal-close="editVehicleModal" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-              Cancelar
-            </button>
-            <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-              Guardar cambios
-            </button>
-          </div>
-        </form>
+            <div>
+              <label for="edit-estado" class="block text-sm font-medium text-gray-700">Estado</label>
+              <select id="edit-estado" name="estado" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="En espera">En espera</option>
+                <option value="En revisión">En revisión</option>
+                <option value="En reparación">En reparación</option>
+                <option value="Listo para entrega">Listo para entrega</option>
+                <option value="Entregado">Entregado</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="edit-observaciones" class="block text-sm font-medium text-gray-700">Observaciones</label>
+              <textarea id="edit-observaciones" name="observaciones" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Fotos</label>
+              <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                <div class="space-y-1 text-center">
+                  <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                  <div class="flex text-sm text-gray-600">
+                    <label for="edit-file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                      <span>Subir fotos</span>
+                      <input id="edit-file-upload" name="file-upload" type="file" class="sr-only" multiple accept="image/*">
+                    </label>
+                    <p class="pl-1">o arrastrar y soltar</p>
+                  </div>
+                  <p class="text-xs text-gray-500">PNG, JPG, GIF hasta 10MB</p>
+                </div>
+              </div>
+              <div id="editImagePreview" class="mt-4 grid grid-cols-2 gap-4"></div>
+            </div>
+
+            <div class="flex justify-end space-x-3">
+              <button type="button" data-modal-close="editVehicleModal" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Cancelar
+              </button>
+              <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Guardar cambios
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>
