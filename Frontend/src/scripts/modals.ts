@@ -150,8 +150,8 @@ export class ModalManager {
   private async handleMechanicLogin(event: Event): Promise<void> {
     event.preventDefault();
     const form = event.target as HTMLFormElement;
-    const rut = form.querySelector<HTMLInputElement>('#mechanic-rut')?.value;
-    const pin = form.querySelector<HTMLInputElement>('#mechanic-pin')?.value;
+    const rut = form.querySelector<HTMLInputElement>('[name="rut"]')?.value;
+    const pin = form.querySelector<HTMLInputElement>('[name="pin"]')?.value;
 
     if (!rut || !pin) {
       this.showError('Por favor complete todos los campos');
