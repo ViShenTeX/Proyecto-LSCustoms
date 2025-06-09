@@ -297,5 +297,66 @@ import '../styles/global.css';
     ModalManager.getInstance();
     CarouselManager.getInstance();
   });
+
+  // Función para formatear RUT
+  function formatRut(rut: string): string {
+    // Eliminar puntos y guión
+    let cleanRut = rut.replace(/[.-]/g, '');
+    
+    // Agregar puntos y guión
+    if (cleanRut.length > 1) {
+      let dv = cleanRut.slice(-1);
+      let rutNumber = cleanRut.slice(0, -1);
+      let rutFormatted = '';
+      
+      for (let i = rutNumber.length; i > 0; i -= 3) {
+        rutFormatted = '.' + rutNumber.slice(Math.max(0, i - 3), i) + rutFormatted;
+      }
+      
+      return rutFormatted.slice(1) + '-' + dv;
+    }
+    
+    return cleanRut;
+  }
+
+  // Función para formatear patente
+  function formatPatente(patente: string): string {
+    // Eliminar guiones
+    let cleanPatente = patente.replace(/-/g, '');
+    
+    // Agregar guiones
+    if (cleanPatente.length > 2) {
+      return cleanPatente.slice(0, 2) + '-' + cleanPatente.slice(2, 4) + '-' + cleanPatente.slice(4);
+    }
+    
+    return cleanPatente;
+  }
+
+  // Event listeners para formateo automático
+  const rutInput = document.getElementById('rut') as HTMLInputElement;
+  const patenteInput = document.getElementById('patente') as HTMLInputElement;
+
+  rutInput?.addEventListener('input', (e) => {
+    const target = e.target as HTMLInputElement;
+    target.value = formatRut(target.value);
+  });
+
+  patenteInput?.addEventListener('input', (e) => {
+    const target = e.target as HTMLInputElement;
+    target.value = formatPatente(target.value);
+  });
+
+  // Manejo del formulario
+  const form = document.getElementById('statusForm') as HTMLFormElement;
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(form);
+    const rut = formData.get('rut') as string;
+    const patente = formData.get('patente') as string;
+
+    window.location.href = `/status?rut=${encodeURIComponent(rut)}&patente=${encodeURIComponent(patente)}`;
+  });
 </script>
 
