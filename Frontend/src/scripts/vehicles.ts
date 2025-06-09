@@ -70,17 +70,24 @@ export class VehicleManager {
         throw new Error('No authentication token found');
       }
 
+      console.log('Cargando vehículos con token:', token.substring(0, 20) + '...');
       const response = await fetch('/api/vehiculos', {
+        method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
+      console.log('Respuesta de vehículos:', response.status);
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Error response:', errorData);
         throw new Error('Failed to load vehicles');
       }
 
       const vehicles = await response.json();
+      console.log('Vehículos cargados:', vehicles);
       this.renderVehicles(vehicles);
     } catch (error) {
       console.error('Error loading vehicles:', error);
