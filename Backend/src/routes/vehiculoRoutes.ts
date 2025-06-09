@@ -61,8 +61,20 @@ router.get('/:id', async (req, res) => {
 // Crear un nuevo vehículo
 router.post('/', upload.single('imagen'), async (req, res) => {
     try {
-        const { patente, marca, modelo, cliente_id, estado, observaciones } = req.body;
+        const { patente, marca, modelo, cliente_rut, estado, observaciones } = req.body;
         const imagen = req.file ? `/uploads/vehicles/${req.file.filename}` : null;
+
+        // Primero obtener el ID del cliente usando el RUT
+        const [clientes] = await db.execute(
+            'SELECT id FROM clients WHERE rut = ?',
+            [cliente_rut]
+        );
+
+        if (!clientes || (Array.isArray(clientes) && clientes.length === 0)) {
+            return res.status(404).json({ message: 'Cliente no encontrado' });
+        }
+
+        const cliente_id = (clientes as any[])[0].id;
 
         const [result] = await db.execute(
             `INSERT INTO vehiculos (patente, marca, modelo, cliente_id, estado, observaciones, imagen, created_at, updated_at) 

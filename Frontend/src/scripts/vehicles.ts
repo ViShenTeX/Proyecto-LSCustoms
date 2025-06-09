@@ -8,6 +8,8 @@ export class VehicleManager {
   private logoutBtn: HTMLElement | null;
   private imagePreview: HTMLElement | null;
   private selectedFiles: File[] = [];
+  private API_BASE_URL = '/api';
+  private currentVehicleId: number | null = null;
 
   private constructor() {
     this.vehicleModal = document.getElementById('vehicleModal');
@@ -32,6 +34,7 @@ export class VehicleManager {
   private initializeEventListeners(): void {
     // Add Vehicle Button
     this.addVehicleBtn?.addEventListener('click', () => {
+      this.currentVehicleId = null;
       this.openModal();
     });
 
@@ -71,7 +74,7 @@ export class VehicleManager {
       }
 
       console.log('Cargando vehículos con token:', token.substring(0, 20) + '...');
-      const response = await fetch('/api/vehiculos', {
+      const response = await fetch(`${this.API_BASE_URL}/vehiculos`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -184,23 +187,19 @@ export class VehicleManager {
 
     const formData = new FormData(this.vehicleForm);
     const vehicleData = {
-      cliente: {
-        rut: formData.get('rut'),
-        nombre: formData.get('nombre'),
-        telefono: formData.get('telefono')
-      },
-      vehiculo: {
-        patente: formData.get('patente'),
-        marca: formData.get('marca'),
-        modelo: formData.get('modelo'),
-        estado: formData.get('estado'),
-        observaciones: formData.get('observaciones')
-      }
+      patente: formData.get('patente'),
+      marca: formData.get('marca'),
+      modelo: formData.get('modelo'),
+      estado: formData.get('estado'),
+      observaciones: formData.get('observaciones'),
+      cliente_rut: formData.get('rut')
     };
 
     try {
-      const response = await fetch('/api/vehicles', {
-        method: 'POST',
+      const url = this.currentVehicleId ? `${this.API_BASE_URL}/vehiculos/${this.currentVehicleId}` : `${this.API_BASE_URL}/vehiculos`;
+      const method = this.currentVehicleId ? 'PUT' : 'POST';
+      const response = await fetch(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json'
         },
@@ -232,7 +231,7 @@ export class VehicleManager {
     });
 
     try {
-      await fetch(`/api/vehicles/${vehicleId}/images`, {
+      await fetch(`${this.API_BASE_URL}/vehicles/${vehicleId}/images`, {
         method: 'POST',
         body: formData
       });
