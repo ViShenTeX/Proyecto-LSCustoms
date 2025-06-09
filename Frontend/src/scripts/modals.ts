@@ -158,11 +158,11 @@ export class ModalManager {
     
     const loginData = {
       rut: rutFormateado,
-      pin: formData.get('pin')
+      password: formData.get('pin')
     };
 
     try {
-      const response = await fetch('/api/mechanics/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
