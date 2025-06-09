@@ -29,10 +29,15 @@ async function initDatabase() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
     `);
+    console.log('Tabla de clientes creada o verificada');
 
-    // Crear tabla de vehículos
+    // Eliminar tabla de vehículos si existe
+    await db.execute('DROP TABLE IF EXISTS vehiculos');
+    console.log('Tabla de vehículos eliminada si existía');
+
+    // Crear tabla de vehículos con la estructura correcta
     await db.execute(`
-      CREATE TABLE IF NOT EXISTS vehiculos (
+      CREATE TABLE vehiculos (
         id INT AUTO_INCREMENT PRIMARY KEY,
         patente VARCHAR(10) NOT NULL UNIQUE,
         marca VARCHAR(50) NOT NULL,
@@ -47,8 +52,7 @@ async function initDatabase() {
         FOREIGN KEY (cliente_id) REFERENCES clientes(id)
       )
     `);
-
-    console.log('Tablas creadas exitosamente');
+    console.log('Tabla de vehículos creada con la estructura correcta');
 
     // Crear usuario admin por defecto
     const adminPin = await bcrypt.hash('1234', 10);
