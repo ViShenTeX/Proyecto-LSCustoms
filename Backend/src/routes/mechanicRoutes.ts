@@ -1,19 +1,15 @@
 import { Router } from 'express';
-import { registerMechanic, loginMechanic, getMechanicProfile } from '../controllers/mechanicController';
-import { auth, isAdmin } from '../middleware/auth';
+import { registerMechanic, getMechanicProfile } from '../controllers/mechanicController';
+import { authMiddleware } from '../middleware/auth';
 import { AppDataSource } from '../config/data-source';
 import { Mechanic } from '../models/Mechanic';
-import { authMiddleware } from './authRoutes';
 
 const router = Router();
 const mechanicRepository = AppDataSource.getRepository(Mechanic);
 
-// Ruta pública para login
-router.post('/login', loginMechanic);
-
 // Rutas protegidas
-router.post('/register', auth, isAdmin, registerMechanic);
-router.get('/profile', auth, getMechanicProfile);
+router.post('/register', authMiddleware, registerMechanic);
+router.get('/profile', authMiddleware, getMechanicProfile);
 
 // Obtener todos los mecánicos
 router.get('/', authMiddleware, async (_req, res) => {
