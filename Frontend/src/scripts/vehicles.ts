@@ -203,9 +203,14 @@ export class VehicleManager {
       cliente_telefono: formData.get('telefono')
     };
 
+    console.log('Enviando datos:', vehicleData);
+
     try {
       const url = this.currentVehicleId ? `${this.API_BASE_URL}/vehiculos/${this.currentVehicleId}` : `${this.API_BASE_URL}/vehiculos`;
       const method = this.currentVehicleId ? 'PUT' : 'POST';
+      console.log('URL:', url);
+      console.log('Método:', method);
+      
       const response = await fetch(url, {
         method: method,
         headers: {
@@ -226,10 +231,11 @@ export class VehicleManager {
         this.loadVehicles();
       } else {
         const errorData = await response.json().catch(() => ({}));
+        console.error('Error response:', errorData);
         throw new Error(errorData.message || 'Error saving vehicle');
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error completo:', error);
       this.showError(error instanceof Error ? error.message : 'Error al guardar el vehículo');
     }
   }

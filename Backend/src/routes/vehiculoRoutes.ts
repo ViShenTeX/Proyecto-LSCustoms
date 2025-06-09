@@ -66,6 +66,7 @@ router.post('/', upload.single('imagen'), async (req, res) => {
         const imagen = req.file ? `/uploads/vehicles/${req.file.filename}` : null;
 
         if (!patente || !marca || !modelo || !cliente_rut || !cliente_nombre || !cliente_telefono || !estado) {
+            console.log('Missing required fields:', { patente, marca, modelo, cliente_rut, cliente_nombre, cliente_telefono, estado });
             return res.status(400).json({ 
                 message: 'Faltan campos requeridos',
                 received: { patente, marca, modelo, cliente_rut, cliente_nombre, cliente_telefono, estado }
@@ -77,6 +78,7 @@ router.post('/', upload.single('imagen'), async (req, res) => {
 
         try {
             // Primero verificar si el cliente existe
+            console.log('Buscando cliente con RUT:', cliente_rut);
             const [clientes] = await db.execute(
                 'SELECT id FROM clientes WHERE rut = ?',
                 [cliente_rut]
@@ -86,6 +88,7 @@ router.post('/', upload.single('imagen'), async (req, res) => {
 
             if (!clientes || (Array.isArray(clientes) && clientes.length === 0)) {
                 // Si el cliente no existe, crearlo
+                console.log('Creando nuevo cliente:', { rut: cliente_rut, nombre: cliente_nombre, telefono: cliente_telefono });
                 const [result] = await db.execute(
                     'INSERT INTO clientes (rut, nombre, telefono, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())',
                     [cliente_rut, cliente_nombre, cliente_telefono]
@@ -98,6 +101,7 @@ router.post('/', upload.single('imagen'), async (req, res) => {
             }
 
             // Crear el vehículo
+            console.log('Creando vehículo con datos:', { patente, marca, modelo, cliente_id, estado, observaciones });
             const [result] = await db.execute(
                 `INSERT INTO vehiculos (patente, marca, modelo, cliente_id, estado, observaciones, imagen, created_at, updated_at) 
                  VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
@@ -106,6 +110,7 @@ router.post('/', upload.single('imagen'), async (req, res) => {
 
             // Confirmar transacción
             await db.commit();
+            console.log('Transacción completada exitosamente');
 
             return res.status(201).json({
                 id: (result as any).insertId,
@@ -119,6 +124,7 @@ router.post('/', upload.single('imagen'), async (req, res) => {
             });
         } catch (error) {
             // Si hay error, revertir transacción
+            console.error('Error en la transacción:', error);
             await db.rollback();
             throw error;
         }
@@ -126,7 +132,8 @@ router.post('/', upload.single('imagen'), async (req, res) => {
         console.error('Error detallado al crear vehículo:', error);
         return res.status(500).json({ 
             message: 'Error al crear vehículo',
-            error: error instanceof Error ? error.message : 'Error desconocido'
+            error: error instanceof Error ? error.message : 'Error desconocido',
+            details: error instanceof Error ? error.stack : undefined
         });
     }
 });
