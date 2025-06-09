@@ -226,7 +226,7 @@ import '../styles/global.css';
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700">Nombre</label>
-            <input type="text" name="nombre" required
+            <input type="text" name="name" required
                    class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                    placeholder="Ingrese nombre del mecánico">
           </div>
@@ -238,9 +238,9 @@ import '../styles/global.css';
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700">Rol</label>
-            <select name="rol" required
+            <select name="role" required
                     class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200">
-              <option value="mecanico">Mecánico</option>
+              <option value="mechanic">Mecánico</option>
               <option value="admin">Administrador</option>
             </select>
           </div>
@@ -276,6 +276,19 @@ import '../styles/global.css';
   }
 
   #vehicleModalContent {
+    transition: transform 0.18s cubic-bezier(0.4,0,0.2,1), opacity 0.18s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  #mechanicModal:not(.modal-hidden) {
+    animation: modalFadeIn 0.18s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  @keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  #mechanicModalContent {
     transition: transform 0.18s cubic-bezier(0.4,0,0.2,1), opacity 0.18s cubic-bezier(0.4,0,0.2,1);
   }
 </style>
@@ -394,18 +407,40 @@ import '../styles/global.css';
 
   // Manejar el modal de mecánicos
   const mechanicModal = document.getElementById('mechanicModal');
+  const mechanicModalContent = document.getElementById('mechanicModalContent');
   const addMechanicBtn = document.getElementById('addMechanicBtn');
   const cancelMechanicBtn = document.getElementById('cancelMechanicBtn');
   const mechanicForm = document.getElementById('mechanicForm');
 
-  if (addMechanicBtn && mechanicModal && cancelMechanicBtn && mechanicForm) {
+  if (addMechanicBtn && mechanicModal && cancelMechanicBtn && mechanicForm && mechanicModalContent) {
     addMechanicBtn.addEventListener('click', () => {
-      mechanicModal.classList.remove('hidden');
+      mechanicModal.classList.remove('modal-hidden');
+      setTimeout(() => {
+        mechanicModalContent?.classList.remove('scale-95', 'opacity-0');
+        mechanicModalContent?.classList.add('scale-100', 'opacity-100');
+      }, 10);
     });
 
     cancelMechanicBtn.addEventListener('click', () => {
-      mechanicModal.classList.add('hidden');
-      (mechanicForm as HTMLFormElement).reset();
+      mechanicModalContent?.classList.remove('scale-100', 'opacity-100');
+      mechanicModalContent?.classList.add('scale-95', 'opacity-0');
+      setTimeout(() => {
+        mechanicModal.classList.add('modal-hidden');
+        (mechanicForm as HTMLFormElement).reset();
+      }, 200);
+    });
+
+    // Cerrar modal al hacer clic en el botón de cerrar
+    const closeButtons = document.querySelectorAll('[data-modal-close="mechanicModal"]');
+    closeButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        mechanicModalContent?.classList.remove('scale-100', 'opacity-100');
+        mechanicModalContent?.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+          mechanicModal.classList.add('modal-hidden');
+          (mechanicForm as HTMLFormElement).reset();
+        }, 200);
+      });
     });
 
     mechanicForm.addEventListener('submit', async (e) => {
@@ -416,9 +451,9 @@ import '../styles/global.css';
       const formData = new FormData(mechanicForm as HTMLFormElement);
       const mechanicData = {
         rut: formData.get('rut'),
-        nombre: formData.get('nombre'),
+        name: formData.get('name'),
         pin: formData.get('pin'),
-        rol: formData.get('rol')
+        role: formData.get('role')
       };
 
       try {
@@ -435,8 +470,13 @@ import '../styles/global.css';
           throw new Error('Error al agregar mecánico');
         }
 
-        mechanicModal.classList.add('hidden');
-        (mechanicForm as HTMLFormElement).reset();
+        mechanicModalContent?.classList.remove('scale-100', 'opacity-100');
+        mechanicModalContent?.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+          mechanicModal.classList.add('modal-hidden');
+          (mechanicForm as HTMLFormElement).reset();
+        }, 200);
+        
         await loadMechanics();
       } catch (error) {
         console.error('Error al agregar mecánico:', error);
