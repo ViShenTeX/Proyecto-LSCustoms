@@ -1,12 +1,10 @@
 import { Router } from 'express';
-import { AppDataSource } from '../config/data-source';
-import { Vehiculo } from '../models/Vehiculo';
 import multer from 'multer';
 import path from 'path';
 import { authMiddleware } from '../middleware/auth';
+import db from '../config/database';
 
 const router = Router();
-const vehiculoRepository = AppDataSource.getRepository(Vehiculo);
 
 // Apply auth middleware to all routes
 router.use(authMiddleware);
@@ -26,71 +24,117 @@ const upload = multer({ storage });
 // Obtener todos los vehículos
 router.get('/', async (_req, res) => {
     try {
-        const vehiculos = await vehiculoRepository.find({
-            relations: ['cliente']
-        });
-        res.json(vehiculos);
+        const [vehiculos] = await db.execute(`
+            SELECT v.*, c.nombre as cliente_nombre 
+            FROM vehiculos v 
+            LEFT JOIN clientes c ON v.cliente_id = c.id
+        `);
+        return res.json(vehiculos);
     } catch (error) {
-        res.status(500).json({ message: 'Error al obtener vehículos' });
+        console.error('Error al obtener vehículos:', error);
+        return res.status(500).json({ message: 'Error al obtener vehículos' });
     }
 });
 
 // Obtener un vehículo por ID
-router.get('/:id', async (req: any, res: any) => {
+router.get('/:id', async (req, res) => {
     try {
-        const vehiculo = await vehiculoRepository.findOne({
-            where: { id: parseInt(req.params.id) },
-            relations: ['cliente']
-        });
-        if (!vehiculo) return res.status(404).json({ message: 'Vehículo no encontrado' });
-        res.json(vehiculo);
+        const [vehiculos] = await db.execute(
+            `SELECT v.*, c.nombre as cliente_nombre 
+             FROM vehiculos v 
+             LEFT JOIN clientes c ON v.cliente_id = c.id 
+             WHERE v.id = ?`,
+            [req.params.id]
+        );
+
+        if (!vehiculos || (Array.isArray(vehiculos) && vehiculos.length === 0)) {
+            return res.status(404).json({ message: 'Vehículo no encontrado' });
+        }
+
+        return res.json(Array.isArray(vehiculos) ? vehiculos[0] : vehiculos);
     } catch (error) {
-        res.status(500).json({ message: 'Error al obtener vehículo' });
+        console.error('Error al obtener vehículo:', error);
+        return res.status(500).json({ message: 'Error al obtener vehículo' });
     }
 });
 
 // Crear un nuevo vehículo
-router.post('/', upload.single('imagen'), async (req: any, res: any) => {
+router.post('/', upload.single('imagen'), async (req, res) => {
     try {
-        const vehiculoData = {
-            ...req.body,
-            imagen: req.file ? `/uploads/vehicles/${req.file.filename}` : null
-        };
-        const vehiculo = vehiculoRepository.create(vehiculoData);
-        const result = await vehiculoRepository.save(vehiculo);
-        res.status(201).json(result);
+        const { patente, marca, modelo, cliente_id, estado, observaciones } = req.body;
+        const imagen = req.file ? `/uploads/vehicles/${req.file.filename}` : null;
+
+        const [result] = await db.execute(
+            `INSERT INTO vehiculos (patente, marca, modelo, cliente_id, estado, observaciones, imagen, created_at, updated_at) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+            [patente, marca, modelo, cliente_id, estado, observaciones, imagen]
+        );
+
+        return res.status(201).json({
+            id: (result as any).insertId,
+            patente,
+            marca,
+            modelo,
+            cliente_id,
+            estado,
+            observaciones,
+            imagen
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error al crear vehículo' });
+        console.error('Error al crear vehículo:', error);
+        return res.status(500).json({ message: 'Error al crear vehículo' });
     }
 });
 
 // Actualizar un vehículo
-router.put('/:id', upload.single('imagen'), async (req: any, res: any) => {
+router.put('/:id', upload.single('imagen'), async (req, res) => {
     try {
-        const vehiculo = await vehiculoRepository.findOneBy({ id: parseInt(req.params.id) });
-        if (!vehiculo) return res.status(404).json({ message: 'Vehículo no encontrado' });
-        
-        const vehiculoData = {
-            ...req.body,
-            imagen: req.file ? `/uploads/vehicles/${req.file.filename}` : vehiculo.imagen
-        };
-        
-        vehiculoRepository.merge(vehiculo, vehiculoData);
-        const result = await vehiculoRepository.save(vehiculo);
-        res.json(result);
+        const { patente, marca, modelo, cliente_id, estado, observaciones } = req.body;
+        const imagen = req.file ? `/uploads/vehicles/${req.file.filename}` : req.body.imagen;
+
+        const [result] = await db.execute(
+            `UPDATE vehiculos 
+             SET patente = ?, marca = ?, modelo = ?, cliente_id = ?, estado = ?, observaciones = ?, imagen = ?, updated_at = NOW()
+             WHERE id = ?`,
+            [patente, marca, modelo, cliente_id, estado, observaciones, imagen, req.params.id]
+        );
+
+        if ((result as any).affectedRows === 0) {
+            return res.status(404).json({ message: 'Vehículo no encontrado' });
+        }
+
+        return res.json({
+            id: parseInt(req.params.id),
+            patente,
+            marca,
+            modelo,
+            cliente_id,
+            estado,
+            observaciones,
+            imagen
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error al actualizar vehículo' });
+        console.error('Error al actualizar vehículo:', error);
+        return res.status(500).json({ message: 'Error al actualizar vehículo' });
     }
 });
 
 // Eliminar un vehículo
-router.delete('/:id', async (req: any, res: any) => {
+router.delete('/:id', async (req, res) => {
     try {
-        const result = await vehiculoRepository.delete(req.params.id);
-        if (result.affected === 0) return res.status(404).json({ message: 'Vehículo no encontrado' });
-        res.status(204).send();
+        const [result] = await db.execute(
+            'DELETE FROM vehiculos WHERE id = ?',
+            [req.params.id]
+        );
+
+        if ((result as any).affectedRows === 0) {
+            return res.status(404).json({ message: 'Vehículo no encontrado' });
+        }
+
+        return res.status(204).send();
     } catch (error) {
-        res.status(500).json({ message: 'Error al eliminar vehículo' });
+        console.error('Error al eliminar vehículo:', error);
+        return res.status(500).json({ message: 'Error al eliminar vehículo' });
     }
 });
 
