@@ -53,6 +53,12 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
+        console.log('Login successful for mechanic:', {
+            id: mechanic.id,
+            rut: mechanic.rut,
+            rol: mechanic.rol
+        });
+
         const token = jwt.sign(
             { 
                 id: mechanic.id,
